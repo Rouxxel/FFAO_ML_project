@@ -1,0 +1,19 @@
+# @package simulation
+# Small synthetic run for tests and schema validation (backend=stub).
+
+backend: stub
+
+domain_width: 4.0
+domain_height: 2.0
+cylinder_diameter: 0.4
+cylinder_center_x: 0.8
+cylinder_center_y: 1.0
+
+inlet_velocity: 1.0
+viscosity: 0.01
+
+simulation_time: 0.05
+time_step: 0.01
+
+mesh_resolution_x: 24
+mesh_resolution_y: 16
