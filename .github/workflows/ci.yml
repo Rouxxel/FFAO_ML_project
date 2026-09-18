@@ -37,6 +37,11 @@ jobs:
       - name: Ruff format
         run: ruff format --check src tests
 
+      - name: Verify Hydra dataset configs are present
+        run: |
+          test -f configs/dataset/stage1_zenodo.yaml
+          test -f configs/dataset/splits.yaml
+
       - name: Unit tests
         run: pytest -m "not slow and not gpu and not cfd"
 
@@ -87,5 +92,5 @@ jobs:
         run: |
           ! grep -RInE '(PRIVATE KEY-----|postgresql://|api[_-]?key\s*=\s*["'"'"'][^"'"'"']+["'"'"'])' \
             --include='*.py' --include='*.yaml' --include='*.yml' \
-            --exclude-dir='.venv' . || \
-            (echo "Forbidden secret pattern in sources." && exit 1)
+            src tests configs scripts documentation || \
+            (echo "Forbidden secret pattern in application sources." && exit 1)

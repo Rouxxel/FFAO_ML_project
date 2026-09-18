@@ -206,8 +206,8 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Local data and run outputs
-dataset/
+# Local data and run outputs (repo root only — not configs/dataset/)
+/dataset/
 results/
 experiments/runs/
 .local_test_runs/
