@@ -1,12 +1,22 @@
-"""FFAO ML: machine learning for 2D flow around a cylinder.
+"""
+#############################################################################
+### FFAO ML package root
+###
+### @file __init__.py
+### @author Sebastian Russo
+### @date 2026
+#############################################################################
 
-Research codebase for CFD simulation, datasets, and ML models predicting
-2D incompressible flow around a cylinder. See repository documentation/ for
-requirements and architecture.
+Public entry point for the ``ffaoml`` package: version string and shared
+field-layout contracts used by CFD export, datasets, and models.
+
+See ``documentation/`` for requirements, architecture, and data contracts.
 """
 
+# Native imports
 from importlib.metadata import PackageNotFoundError, version
 
+# Project imports
 from ffaoml.contracts import (
     DEFAULT_FIELD_CHANNELS,
     METADATA_CSV_COLUMNS,
