@@ -1,4 +1,4 @@
-# Hydra root — compose with: hydra compose (from repo root, config path configs)
+# Hydra root — load via Compose API (see tests/test_config.py) or scripts/compose_config.py
 
 defaults:
   - simulation: cylinder_base
