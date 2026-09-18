@@ -1,0 +1,18 @@
+# @package simulation
+
+backend: fd
+
+domain_width: 10.0
+domain_height: 6.0
+cylinder_diameter: 1.0
+cylinder_center_x: 2.0
+cylinder_center_y: 3.0
+
+inlet_velocity: 1.0
+viscosity: 0.01
+
+simulation_time: 20.0
+time_step: 0.002
+
+mesh_resolution_x: 128
+mesh_resolution_y: 64

@@ -1,0 +1,21 @@
+# Hydra root — load via Compose API (see tests/test_config.py) or scripts/compose_config.py
+
+defaults:
+  - simulation: cylinder_base
+  - dataset: stage1_zenodo
+  - model: cnn
+  - train: default
+  - _self_
+
+seed: 42
+
+paths:
+  dataset_root: dataset
+  runs_root: results/runs
+
+hydra:
+  run:
+    dir: ${paths.runs_root}/${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: ${paths.runs_root}/multirun/${now:%Y-%m-%d_%H-%M-%S}
+    subdir: ${hydra.job.num}

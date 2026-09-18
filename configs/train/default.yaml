@@ -1,0 +1,13 @@
+# @package train
+
+batch_size: 8
+learning_rate: 1.0e-3
+epochs: 100
+checkpoint_every: 10
+num_workers: 0
+
+device: cpu
+
+loss:
+  field_mse: true
+  divergence_weight: 0.0
