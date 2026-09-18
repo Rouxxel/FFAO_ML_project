@@ -210,6 +210,7 @@ __marimo__/
 dataset/
 results/
 experiments/runs/
+.local_test_runs/
 
 # Hydra
 outputs/
