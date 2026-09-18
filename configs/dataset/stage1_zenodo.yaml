@@ -3,6 +3,7 @@
 
 stage: 1
 source_id: zenodo_re100
+source_url: https://zenodo.org/records/18669296
 zenodo_record: "18669296"
 related_code_url: https://github.com/LucaAddiucci/Physics-Constrained-Convolutional-Autoencoders
 
@@ -10,13 +11,25 @@ re: 100
 output_root: ${paths.dataset_root}
 simulation_id: re_100_zenodo
 
-# Time-based split within a single trajectory (151 snapshots typical).
-# Indices are inclusive start, exclusive end on time dimension after import.
+import:
+  cache_dir: .cache/zenodo_stage1
+  upstream_data_filename: cylinder_re100_grid64_last100.h5
+  # Set when the HDF5 is hosted outside the Zenodo file list (direct HTTPS URL).
+  upstream_data_url: null
+  dt: 1.0
+  u_inlet: 1.0
+  nu: 0.01
+  diameter: 1.0
+  metadata_split: full
+  time_chunk: 16
+
+# Time-based split within a single trajectory (typical HDF5: 100 snapshots).
+# Indices are inclusive start, exclusive end on the time dimension after import.
 temporal_split:
   strategy: by_time_index
-  train: [0, 105]
-  val: [105, 128]
-  test: [128, 151]
+  train: [0, 70]
+  val: [70, 85]
+  test: [85, 100]
 
 # Multi-Re lists in splits.yaml are inactive until Stage 3 or own multi-Re CFD.
 use_re_splits: false
