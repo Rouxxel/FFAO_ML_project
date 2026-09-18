@@ -435,3 +435,4 @@ Redistributions of code must retain [LICENSE](../LICENSE) and [NOTICE](../NOTICE
 - [TECH_STACK.md](./TECH_STACK.md) — libraries, optional groups, platform notes
 - [LEGAL.md](./LEGAL.md) — licensing overview
 - [ATTRIBUTION.md](./ATTRIBUTION.md) — how to give credit
+- [CONTRACTS.md](./CONTRACTS.md) — field tensors, masks, `metadata.csv`
