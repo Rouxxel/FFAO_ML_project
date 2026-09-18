@@ -5,8 +5,9 @@ Human-readable specification: documentation/CONTRACTS.md
 
 from __future__ import annotations
 
-from enum import Enum
-from typing import Final, Sequence
+from collections.abc import Sequence
+from enum import StrEnum
+from typing import Final
 
 # ML tensor layout: (batch, channels, height, width)
 # Channel order is fixed unless a run config documents a subset.
@@ -27,7 +28,7 @@ FIELD_CHANNEL_ALIASES: Final[dict[str, str]] = {
 }
 
 
-class FieldChannel(str, Enum):
+class FieldChannel(StrEnum):
     """Channel identifiers for stacked flow tensors."""
 
     VELOCITY_X = "velocity_x"
