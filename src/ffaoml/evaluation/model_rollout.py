@@ -117,3 +117,56 @@ def torch_predict_fn(model: torch.nn.Module, device: torch.device) -> Callable:
         return out.astype(np.float32)
 
     return _predict
+
+
+def convlstm_rollout_curve(
+    series: np.ndarray,
+    model: torch.nn.Module,
+    device: torch.device,
+    horizon: int,
+) -> RolloutCurve:
+    """
+    Multi-step rollout for a ConvLSTM with carried hidden state.
+
+    Parameters:
+        series (np.ndarray): ``(T, C, H, W)`` trajectory.
+        model (torch.nn.Module): ``FlowConvLSTM`` in eval mode.
+        device (torch.device): Inference device.
+        horizon (int): Maximum rollout length.
+
+    Returns:
+        RolloutCurve: Mean errors at horizons 1..H.
+    """
+    import torch
+
+    if horizon < 1:
+        raise ValueError("horizon must be >= 1")
+    t_total = series.shape[0]
+    max_horizon = min(horizon, t_total - 1)
+    if max_horizon < 1:
+        raise ValueError("series too short for requested rollout")
+
+    mse_sums = np.zeros(max_horizon, dtype=np.float64)
+    rel_sums = np.zeros(max_horizon, dtype=np.float64)
+    n_starts = 0
+    model.eval()
+    with torch.no_grad():
+        for start in range(0, t_total - max_horizon):
+            n_starts += 1
+            state = None
+            x = torch.from_numpy(series[start][None, ...]).float().to(device)
+            for step in range(max_horizon):
+                truth = series[start + step + 1]
+                pred, state = model(x, state)
+                x_hat = pred.cpu().numpy()[0]
+                mse_sums[step] += mse(x_hat, truth)
+                rel_sums[step] += relative_l2(x_hat, truth)
+                x = pred
+
+    horizons = tuple(range(1, max_horizon + 1))
+    return RolloutCurve(
+        horizons=horizons,
+        mse=tuple(float(x / n_starts) for x in mse_sums),
+        relative_l2=tuple(float(x / n_starts) for x in rel_sums),
+        n_starts=n_starts,
+    )
