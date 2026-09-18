@@ -8,7 +8,7 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
-# gitleaks needs pull-requests:read to scan PR commits on private/some repos.
+# gitleaks needs pull-requests:read to scan PR commits on some repositories.
 permissions:
   contents: read
   pull-requests: read
@@ -25,12 +25,3 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  dependency-review:
-    runs-on: ubuntu-24.04
-    if: github.event_name == 'pull_request'
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - name: Dependency review (requires Dependency graph + GHAS)
-        uses: actions/dependency-review-action@v4

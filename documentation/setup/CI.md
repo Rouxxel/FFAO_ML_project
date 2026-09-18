@@ -9,7 +9,7 @@ is a **single Python package** at the repo root — no frontend/backend split.
 .github/
   workflows/
     ci.yml          # lint, format, tests, wheel build, pip audit
-    security.yml    # gitleaks + dependency review on PRs
+    security.yml    # gitleaks secret scan
   dependabot.yml    # weekly pip + Actions updates
 ```
 
@@ -21,7 +21,6 @@ is a **single Python package** at the repo root — no frontend/backend split.
 | `package` | `ci.yml` | `python -m build` after quality passes |
 | `supply-chain` | `ci.yml` | `pip audit` (informational until tightened), no `.env`, secret grep |
 | `secrets` | `security.yml` | gitleaks |
-| `dependency-review` | `security.yml` | Optional; needs Dependency graph + GHAS (non-blocking) |
 
 Install set in CI: `pip install -e ".[core,dev]"` — **not** `ml` or `cfd-dedalus`
 (heavy / platform-specific). Local ML/CFD installs use extras from `pyproject.toml`.
@@ -61,12 +60,14 @@ Commit the Hydra dataset group files:
 - `configs/dataset/stage1_zenodo.yaml`
 - `configs/dataset/splits.yaml`
 
-### Dependency review unsupported
+### Dependency review (not used)
 
-On personal repos without GitHub Advanced Security, the `dependency-review` job
-logs a message and exits non-zero but is marked **`continue-on-error: true`** so
-it does not fail the workflow. Enable [Dependency graph](https://github.com/Rouxxel/FFAO_ML_project/settings/security_analysis)
-if you add GHAS later.
+`actions/dependency-review-action` requires **Dependency graph** plus **GitHub
+Advanced Security**, which many personal repos do not have. This project relies
+on **`pip audit`** and **Dependabot** in `ci.yml` / `dependabot.yml` instead. To
+add dependency review later, restore a job from [GitHub’s
+docs](https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review)
+after enabling security analysis.
 
 ### gitleaks `Resource not accessible by integration`
 
@@ -75,8 +76,10 @@ locally or rely on the `supply-chain` grep step in `ci.yml`.
 
 ### Node 20 deprecation notice
 
-GitHub Actions may print a notice while third-party actions move to Node 24; it is
-informational and does not fail the build.
+GitHub may log that **Node 20 is deprecated** while an action’s bundle still targets
+Node 20; the runner often uses **Node 24** anyway. That line is **informational**
+(not a failed step). It should disappear as action authors publish Node-24-based
+releases (e.g. newer `gitleaks-action` / `checkout` versions).
 
 ## Adding workflows later
 
