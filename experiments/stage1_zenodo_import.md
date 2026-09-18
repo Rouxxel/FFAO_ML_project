@@ -35,3 +35,14 @@ See also `documentation/ATTRIBUTION.md` and `LICENSE-DATA`.
 | `dataset/simulations/re_100_zenodo/fields.zarr` | Time-chunked CONTRACT channels |
 | `dataset/metadata.csv` | Single row, `split=full` (ML uses `temporal_split` in config) |
 | `dataset/manifest.json` | `stage: 1`, `source_id: zenodo_re100`, provenance hashes |
+
+## Validation (Phase 3)
+
+After import:
+
+```bash
+python scripts/validate_stage1_zenodo.py
+```
+
+Writes `results/cfd_validation/stage1_zenodo/` (`SUMMARY.md`, figures, GIF, `metrics.json`).
+Cd/Cl plots are documented as deferred when forces are not in the dataset (PRD §8).
