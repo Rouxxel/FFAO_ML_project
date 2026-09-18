@@ -96,6 +96,18 @@ python scripts/evaluate.py --run-id baseline_val --split val
 Writes `results/runs/<run_id>/metrics.json` with persistence and linear rollout
 curves (`configs/eval/default.yaml`).
 
+### 6. Train one-step CNN (ML Phase 2)
+
+Requires the `[ml]` extra (`torch`):
+
+```bash
+pip install -e ".[core,dev,ml]"
+python scripts/train.py --run-id cnn_stage1 --epochs 50
+```
+
+Writes `model.pt`, `config.yaml`, `preprocess_stats.json`, `dataset_manifest.json`
+(when present), and `training_summary.json` (includes comparison vs persistence).
+
 ## Python package
 
 Import name: **`ffaoml`**, [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) under `src/ffaoml/`. Layout and components:
