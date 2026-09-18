@@ -14,6 +14,7 @@ Read and write CONTRACTS-compliant simulation fields as xarray Zarr stores
 # Native imports
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,10 @@ from ffaoml.contracts import DEFAULT_FIELD_CHANNELS
 
 """CONSTANTS-----------------------------------------------------------"""
 FIELD_STORE_NAME = "fields.zarr"
+TIME_DIM = "time"
+Y_DIM = "y"
+X_DIM = "x"
+STORE_DIM_ORDER = (TIME_DIM, Y_DIM, X_DIM)
 
 """PATHS-----------------------------------------------------------"""
 
@@ -116,6 +121,54 @@ def write_field_store(
             encoding["solid_mask"] = {"chunks": (y.size, x.size)}
     ds.to_zarr(store_path, mode="w", encoding=encoding)
     return store_path
+
+
+"""READ-----------------------------------------------------------"""
+
+
+def read_time_window(
+    dataset: xr.Dataset,
+    start: int,
+    stop: int,
+) -> xr.Dataset:
+    """
+    Select a contiguous time index range ``[start, stop)``.
+
+    Parameters:
+        dataset (xr.Dataset): Opened field store.
+        start (int): Inclusive time index.
+        stop (int): Exclusive time index.
+
+    Returns:
+        xr.Dataset: Sliced view (lazy when backed by Zarr).
+    """
+    return dataset.isel({TIME_DIM: slice(int(start), int(stop))})
+
+
+def stack_fields_tensor(
+    dataset: xr.Dataset,
+    channels: Sequence[str] | None = None,
+) -> np.ndarray:
+    """
+    Stack channels to ML layout ``(n_time, n_channels, height, width)``.
+
+    Parameters:
+        dataset (xr.Dataset): Contains CONTRACT channel variables.
+        channels (Sequence[str] | None): Order to stack; defaults to CONTRACT list.
+
+    Returns:
+        np.ndarray: Float32 array shaped ``(T, C, H, W)``.
+
+    Raises:
+        KeyError: When a channel is missing from the dataset.
+    """
+    order = tuple(channels) if channels is not None else DEFAULT_FIELD_CHANNELS
+    arrays = []
+    for name in order:
+        if name not in dataset:
+            raise KeyError(f"channel '{name}' missing from field store")
+        arrays.append(np.asarray(dataset[name].values, dtype=np.float32))
+    return np.stack(arrays, axis=1)
 
 
 def open_field_store(simulation_dir: str | Path) -> xr.Dataset:

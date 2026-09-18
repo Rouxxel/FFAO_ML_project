@@ -59,6 +59,24 @@ def ensure_metadata_csv(dataset_root: str | Path) -> Path:
 """ROWS-----------------------------------------------------------"""
 
 
+def read_metadata_rows(dataset_root: str | Path) -> list[dict[str, Any]]:
+    """
+    Load all rows from ``metadata.csv``.
+
+    Parameters:
+        dataset_root (str | Path): Dataset root directory.
+
+    Returns:
+        list[dict[str, Any]]: Parsed rows (empty when the file is missing).
+    """
+    path = metadata_csv_path(dataset_root)
+    if not path.is_file():
+        return []
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        return [dict(row) for row in reader]
+
+
 def append_metadata_row(dataset_root: str | Path, row: dict[str, Any]) -> Path:
     """
     Append one simulation row to ``metadata.csv``.
