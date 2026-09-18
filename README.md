@@ -33,6 +33,7 @@ Continuous integration: [documentation/setup/CI.md](documentation/setup/CI.md) (
 | [documentation/PRD.md](documentation/PRD.md) | Requirements and research questions |
 | [documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md) | System design and repository layout |
 | [documentation/CONTRACTS.md](documentation/CONTRACTS.md) | CFD / dataset / ML tensor contracts |
+| [documentation/DATA_SOURCES.md](documentation/DATA_SOURCES.md) | Staged datasets (Stage 1 active) |
 | [documentation/TECH_STACK.md](documentation/TECH_STACK.md) | Technology choices |
 | [documentation/LEGAL.md](documentation/LEGAL.md) | Licensing overview |
 | [documentation/ATTRIBUTION.md](documentation/ATTRIBUTION.md) | How to give credit |

@@ -2,7 +2,7 @@
 
 defaults:
   - simulation: cylinder_base
-  - dataset: splits
+  - dataset: stage1_zenodo
   - model: cnn
   - train: default
   - _self_

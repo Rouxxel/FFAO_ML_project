@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from hydra import compose, initialize_config_dir
+from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
 
 from ffaoml.config import (
@@ -33,11 +34,26 @@ def test_compose_loads_default_groups(default_config) -> None:
     assert cfg.paths.runs_root == "results/runs"
 
 
-def test_re_splits_are_config_driven(default_config) -> None:
+def test_default_dataset_is_stage1_zenodo(default_config) -> None:
     cfg = default_config
+    assert cfg.dataset.stage == 1
+    assert cfg.dataset.source_id == "zenodo_re100"
+    assert cfg.dataset.re == 100
+    assert cfg.dataset.use_re_splits is False
+    assert cfg.dataset.temporal_split.train == [0, 105]
+
+
+def test_re_splits_compose_when_selected() -> None:
+    GlobalHydra.instance().clear()
+    with initialize_config_dir(
+        config_dir=str(config_dir(REPO_ROOT)),
+        version_base="1.3",
+    ):
+        cfg = compose(config_name="config", overrides=["dataset=splits"])
+    GlobalHydra.instance().clear()
+    assert cfg.dataset.stage == 3
+    assert cfg.dataset.use_re_splits is True
     assert cfg.dataset.train_re == [50, 75, 100, 150, 200]
-    assert cfg.dataset.val_re == [125, 175]
-    assert cfg.dataset.test_re == [250, 300, 400]
 
 
 def test_write_resolved_config_roundtrip(default_config) -> None:
@@ -45,7 +61,7 @@ def test_write_resolved_config_roundtrip(default_config) -> None:
     path = write_resolved_config(default_config, run_dir)
     assert path.is_file()
     loaded = OmegaConf.load(path)
-    assert loaded.dataset.train_re == default_config.dataset.train_re
+    assert loaded.dataset.source_id == default_config.dataset.source_id
 
 
 def test_seed_from_config(default_config) -> None:
