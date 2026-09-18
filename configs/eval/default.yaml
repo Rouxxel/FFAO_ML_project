@@ -1,0 +1,10 @@
+# @package eval
+# Baseline rollout evaluation (Stage 1 temporal splits)
+
+split: val
+rollout_horizon: 50
+report_horizons: [1, 5, 10, 25, 50]
+
+baselines:
+  - persistence
+  - linear
