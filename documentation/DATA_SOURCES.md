@@ -54,9 +54,13 @@ evaluating **outside** the training distribution of physical conditions?
 
 ## Stage 1 — Small Re = 100 prototype (active)
 
-Classic 2D cylinder wake at **Re = 100**; ~**151** time snapshots; high spatial
-resolution (e.g. 449×199); **vorticity** (Kármán shedding). Suitable for CNN /
-ConvLSTM on regular grids after optional downsampling.
+Classic 2D cylinder wake at **Re = 100**. The Zenodo PO-CAE release documents
+**`cylinder_re100_grid64_last100.h5`**: ~**100** time snapshots on a **64×64**
+structured grid with velocity components (and optional vorticity channel). Suitable
+for CNN / ConvLSTM on regular grids.
+
+**Import adapter:** `src/ffaoml/data/sources/zenodo_re100.py`  
+**CLI:** `python scripts/download_stage1_zenodo.py`
 
 | Resource | URL |
 |----------|-----|
@@ -64,7 +68,9 @@ ConvLSTM on regular grids after optional downsampling.
 | Related code (Physics-Constrained Convolutional Autoencoders) | https://github.com/LucaAddiucci/Physics-Constrained-Convolutional-Autoencoders |
 
 **Project config:** `configs/dataset/stage1_zenodo.yaml`  
-**On-disk target:** `dataset/simulations/re_100/` (+ `metadata.csv` row, manifest `stage: 1`).
+**On-disk target:** `dataset/simulations/re_100_zenodo/` (+ `metadata.csv` row,
+manifest `stage: 1`). If the HDF5 is not attached to the Zenodo file list yet,
+place it under `.cache/zenodo_stage1/` or pass `--local-file` to the import script.
 
 **Splits:** Use **time-based** train/val/test within the trajectory — not the
 multi-Re lists in `configs/dataset/splits.yaml` (those apply to Stage 3 / own
