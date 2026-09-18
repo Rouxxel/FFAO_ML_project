@@ -20,7 +20,10 @@ Optional extras: `ml`, `cfd-dedalus`, `track` (see `pyproject.toml`). Platform n
 
 ```bash
 python -c "import ffaoml; print(ffaoml.__version__)"
+pytest -m "not slow and not gpu and not cfd"
 ```
+
+Continuous integration: [documentation/setup/CI.md](documentation/setup/CI.md) (GitHub Actions).
 
 ## Documentation
 
