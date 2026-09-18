@@ -73,6 +73,9 @@ One row per simulation. Required columns:
 Optional columns (e.g. solver name, git commit) may be appended later; document
 them in `dataset/manifest.json` when introduced.
 
+External imports must also record `stage`, `source_id`, and `source_url` — see
+[DATA_SOURCES.md](./DATA_SOURCES.md).
+
 **Train/val/test:** assign by **Reynolds number**, not by random frames (PRD §11).
 
 ---

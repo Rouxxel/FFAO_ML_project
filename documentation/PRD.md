@@ -15,9 +15,22 @@ The project should combine:
 * Reduced-order modeling
 * Generalization across physical regimes
 
-The primary research question is:
+The project evolves in **stages** (see [DATA_SOURCES.md](./DATA_SOURCES.md)):
 
-> **Can a machine-learning model learn the dynamics of flow around an obstacle and generalize to flow conditions that were not present in its training data?**
+1. **Stage 1 (first):** Learn **temporal evolution** of cylinder wake dynamics at fixed
+   conditions (e.g. Re ≈ 100, small public dataset).
+2. **Stage 2 (later):** Unstructured **mesh** data (MeshGraphNets cylinder_flow) and
+   graph-based surrogates.
+3. **Stage 3 (later):** **Generalization** across physical conditions (e.g. CFDBench
+   Reynolds / boundary / geometry sweeps) when storage allows.
+
+**Primary research question (initial):**
+
+> **Can a machine-learning model learn the temporal evolution of vortex shedding around a cylinder and remain stable over multi-step rollouts?**
+
+**Extended research question (after Stage 3 or multi-Re own CFD):**
+
+> **How well can surrogate models reproduce temporal evolution and physically relevant quantities, and how does performance degrade outside the physical conditions seen in training?**
 
 The project must retain the physical interpretation of the problem rather than treating CFD output as arbitrary image data.
 
@@ -36,8 +49,10 @@ The project must retain the physical interpretation of the problem rather than t
 3. Build a dataset containing flow fields over time.
 4. Train ML models to predict future flow states.
 5. Evaluate spatial and temporal prediction accuracy.
-6. Test generalization to unseen Reynolds numbers.
-7. Compare ML predictions against physical quantities such as drag and lift.
+6. **Eventually** test generalization to unseen physical conditions (Re, BC, geometry)
+   — not required for Stage 1.
+7. Compare ML predictions against physical quantities such as drag, lift, and vorticity
+   when the dataset or solver provides them.
 
 ---
 
@@ -175,6 +190,21 @@ Each simulation should have clearly documented physical parameters.
 
 Public CFD datasets may also be used where appropriate.
 
+### 7.1 Staged data acquisition (recommended)
+
+| Stage | Source | Role | Approx. size |
+|-------|--------|------|----------------|
+| **1** | [Zenodo Re=100 cylinder flow](https://zenodo.org/records/18669296) | Pipeline + one-step / multi-step ML | ~1 MB |
+| **2** | DeepMind MeshGraphNets `cylinder_flow` | GNN / mesh-based ML | Multi-GB |
+| **3** | CFDBench (cylinder subset) | Condition generalization | ~13 GB interpolated |
+
+Full URLs, mirrors, and import notes: [DATA_SOURCES.md](./DATA_SOURCES.md).
+
+**Stage 1** uses **time-based** train/val/test splits on a single trajectory.
+**Multi-Re splits** (§11) apply when Stage 3 or in-house multi-Re simulations are used.
+
+In-house CFD (§6) remains valuable but is **not** required before Stage 1 ML.
+
 ---
 
 ## 8. Baseline Analysis
@@ -306,13 +336,19 @@ The purpose is to determine whether increasing model complexity produces meaning
 
 ## 11. Train/Test Split
 
-Do NOT randomly split individual frames only.
+Do NOT randomly split individual frames only within a single continuous simulation
+without a documented protocol — that causes **temporal leakage**.
 
-That would cause severe temporal leakage.
+### Stage 1 (single trajectory, fixed Re)
 
-Use simulation-level splits.
+Use **contiguous time blocks** (or rolling windows with strict causality) for
+train / val / test — e.g. early times for training, later times for testing rollout.
 
-Example:
+### Stage 3 / multi-Re own CFD
+
+Use **simulation-level splits by Reynolds number** (or by condition id for CFDBench).
+
+Example (multi-Re):
 
 ```text
 Training:
@@ -538,7 +574,10 @@ The project is successful if:
 
 ## 20. Final Research Question
 
-> **To what extent can a learned dynamical model reproduce and generalize the temporal evolution and physically relevant quantities of fluid flow around an obstacle across different Reynolds-number regimes?**
+> **How well can machine-learning surrogate models reproduce the temporal evolution and physically relevant quantities of flow around a cylinder, and how does predictive performance degrade when evaluated outside the physical conditions represented in training data?**
+
+Stage 1 emphasizes **temporal evolution and rollout stability** at fixed Re; Stage 3
+(or own multi-Re CFD) emphasizes **distribution shift** across conditions.
 
 ---
 
