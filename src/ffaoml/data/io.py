@@ -1,20 +1,49 @@
-"""Zarr / xarray export for simulation fields."""
+"""
+#############################################################################
+### Zarr field store I/O
+###
+### @file io.py
+### @author Sebastian Russo
+### @date 2026
+#############################################################################
 
+Read and write CONTRACTS-compliant simulation fields as xarray Zarr stores
+(``fields.zarr`` per simulation directory).
+"""
+
+# Native imports
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
+# Third-party imports
 import numpy as np
 import xarray as xr
 
+# Project imports
 from ffaoml.contracts import DEFAULT_FIELD_CHANNELS
 
+"""CONSTANTS-----------------------------------------------------------"""
 FIELD_STORE_NAME = "fields.zarr"
+
+"""PATHS-----------------------------------------------------------"""
 
 
 def simulation_store_path(simulation_dir: str | Path) -> Path:
+    """
+    Path to the Zarr store for one simulation.
+
+    Parameters:
+        simulation_dir (str | Path): ``dataset/simulations/<sim_id>/``.
+
+    Returns:
+        Path: ``.../fields.zarr``.
+    """
     return Path(simulation_dir) / FIELD_STORE_NAME
+
+
+"""EXPORT-----------------------------------------------------------"""
 
 
 def write_field_store(
@@ -27,7 +56,26 @@ def write_field_store(
     attrs: dict[str, Any] | None = None,
     solid_mask: np.ndarray | None = None,
 ) -> Path:
-    """Write CONTRACTS-compliant fields to ``fields.zarr`` under ``simulation_dir``."""
+    """
+    Write required flow channels to ``fields.zarr``.
+
+    Parameters:
+        simulation_dir (str | Path): Output directory for this case.
+        time (np.ndarray): Time coordinate, length ``n_steps``.
+        y (np.ndarray): Y grid coordinates, length ``ny``.
+        x (np.ndarray): X grid coordinates, length ``nx``.
+        fields (dict[str, np.ndarray]): Arrays keyed by ``DEFAULT_FIELD_CHANNELS``
+            names, each shape ``(n_steps, ny, nx)``.
+        attrs (dict[str, Any] | None): Global Zarr attributes (Re, dt, etc.).
+        solid_mask (np.ndarray | None): Optional ``(ny, nx)`` bool cylinder mask.
+
+    Returns:
+        Path: Written Zarr directory.
+
+    Raises:
+        KeyError: If a required channel is missing.
+        ValueError: On shape mismatch for fields or mask.
+    """
     simulation_dir = Path(simulation_dir)
     simulation_dir.mkdir(parents=True, exist_ok=True)
     store_path = simulation_store_path(simulation_dir)
@@ -60,4 +108,13 @@ def write_field_store(
 
 
 def open_field_store(simulation_dir: str | Path) -> xr.Dataset:
+    """
+    Open an existing ``fields.zarr`` store.
+
+    Parameters:
+        simulation_dir (str | Path): Simulation directory containing the store.
+
+    Returns:
+        xr.Dataset: Lazy-loaded field dataset.
+    """
     return xr.open_zarr(simulation_store_path(simulation_dir))
