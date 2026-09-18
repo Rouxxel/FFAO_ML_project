@@ -1,17 +1,44 @@
-"""Synthetic fields for schema / pipeline tests (not physical CFD)."""
+"""
+#############################################################################
+### Stub CFD backend
+###
+### @file stub_backend.py
+### @author Sebastian Russo
+### @date 2026
+#############################################################################
 
+Synthetic flow fields for schema and pipeline tests. Not a physical Navier–Stokes
+solver; use ``simulation.backend=stub`` in CI and local smoke configs.
+"""
+
+# Native imports
 from __future__ import annotations
 
+# Third-party imports
 import numpy as np
 
+# Project imports
 from ffaoml.cfd.types import SimulationCase, SimulationResult
 from ffaoml.data.io import write_field_store
 
+"""BACKEND-----------------------------------------------------------"""
+
 
 class StubSolver:
+    """Write CONTRACTS-compliant random-ish fields without running CFD."""
+
     name = "stub"
 
     def run(self, case: SimulationCase) -> SimulationResult:
+        """
+        Generate synthetic fields and export ``fields.zarr``.
+
+        Parameters:
+            case (SimulationCase): Grid size, timing, and output paths.
+
+        Returns:
+            SimulationResult: Zarr path and ``metadata.csv`` row.
+        """
         rng = np.random.default_rng(case.seed)
         ny, nx = case.ny, case.nx
         time = np.arange(case.n_steps, dtype=float) * case.dt
