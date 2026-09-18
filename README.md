@@ -6,6 +6,22 @@
 
 Import name: **`ffaoml`**, using the [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) under `src/ffaoml/`. Repository layout and component boundaries are described in [documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md). Tensor, mask, and `metadata.csv` conventions are in [documentation/CONTRACTS.md](documentation/CONTRACTS.md).
 
+### Install (development)
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# Linux/macOS: source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -e ".[core,dev]"
+```
+
+Optional extras: `ml`, `cfd-dedalus`, `track` (see `pyproject.toml`). Platform notes: [documentation/setup/PLATFORMS.md](documentation/setup/PLATFORMS.md).
+
+```bash
+python -c "import ffaoml; print(ffaoml.__version__)"
+```
+
 ## Documentation
 
 | Document | Description |
