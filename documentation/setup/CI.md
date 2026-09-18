@@ -21,7 +21,7 @@ is a **single Python package** at the repo root — no frontend/backend split.
 | `package` | `ci.yml` | `python -m build` after quality passes |
 | `supply-chain` | `ci.yml` | `pip audit` (informational until tightened), no `.env`, secret grep |
 | `secrets` | `security.yml` | gitleaks |
-| `dependency-review` | `security.yml` | GitHub dependency review on PRs |
+| `dependency-review` | `security.yml` | Optional; needs Dependency graph + GHAS (non-blocking) |
 
 Install set in CI: `pip install -e ".[core,dev]"` — **not** `ml` or `cfd-dedalus`
 (heavy / platform-specific). Local ML/CFD installs use extras from `pyproject.toml`.
@@ -51,6 +51,32 @@ On GitHub: **Settings → Branches →** require checks such as:
 - `Security / secrets`
 
 Optional: require `supply-chain` once `pip audit` runs with `continue-on-error: false`.
+
+## Troubleshooting
+
+### `Could not find 'dataset/stage1_zenodo'`
+
+Commit the Hydra dataset group files:
+
+- `configs/dataset/stage1_zenodo.yaml`
+- `configs/dataset/splits.yaml`
+
+### Dependency review unsupported
+
+On personal repos without GitHub Advanced Security, the `dependency-review` job
+logs a message and exits non-zero but is marked **`continue-on-error: true`** so
+it does not fail the workflow. Enable [Dependency graph](https://github.com/Rouxxel/FFAO_ML_project/settings/security_analysis)
+if you add GHAS later.
+
+### gitleaks `Resource not accessible by integration`
+
+`security.yml` sets `pull-requests: read`. If a fork PR still fails, run gitleaks
+locally or rely on the `supply-chain` grep step in `ci.yml`.
+
+### Node 20 deprecation notice
+
+GitHub Actions may print a notice while third-party actions move to Node 24; it is
+informational and does not fail the build.
 
 ## Adding workflows later
 
