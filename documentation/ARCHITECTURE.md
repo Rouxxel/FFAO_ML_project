@@ -437,3 +437,4 @@ Redistributions of code must retain [LICENSE](../LICENSE) and [NOTICE](../NOTICE
 - [ATTRIBUTION.md](./ATTRIBUTION.md) — how to give credit
 - [CONTRACTS.md](./CONTRACTS.md) — field tensors, masks, `metadata.csv`
 - [DATA_SOURCES.md](./DATA_SOURCES.md) — staged external datasets (Stage 1–3)
+- [REPRODUCIBILITY.md](./REPRODUCIBILITY.md) — `manifest.json` and checkpoint bundles

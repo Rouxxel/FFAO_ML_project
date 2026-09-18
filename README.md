@@ -37,6 +37,7 @@ Continuous integration: [documentation/setup/CI.md](documentation/setup/CI.md) (
 | [documentation/TECH_STACK.md](documentation/TECH_STACK.md) | Technology choices |
 | [documentation/LEGAL.md](documentation/LEGAL.md) | Licensing overview |
 | [documentation/ATTRIBUTION.md](documentation/ATTRIBUTION.md) | How to give credit |
+| [documentation/REPRODUCIBILITY.md](documentation/REPRODUCIBILITY.md) | Manifests and checkpoint bundles |
 
 ## License and attribution
 
@@ -47,6 +48,6 @@ This project is **open source**. You may use the code and published results if y
 | Source code | [Apache 2.0](LICENSE) |
 | Datasets, checkpoints, figures, metrics | [CC BY 4.0](LICENSE-DATA) |
 
-See [NOTICE](NOTICE) and [documentation/ATTRIBUTION.md](documentation/ATTRIBUTION.md). To cite the project academically, use [CITATION.cff](CITATION.cff).
+See [NOTICE](NOTICE) and [documentation/ATTRIBUTION.md](documentation/ATTRIBUTION.md). To cite the project academically, use [CITATION.cff](CITATION.cff) (keep `version` in sync with `pyproject.toml` when tagging releases).
 
 **Copyright © 2026 Sebastian Russo**

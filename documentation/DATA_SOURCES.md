@@ -131,6 +131,8 @@ checklist for solver vs import tracks.
 
 ## Manifest fields (all stages)
 
+Implementation: `ffaoml.manifests` — full notes in [REPRODUCIBILITY.md](./REPRODUCIBILITY.md).
+
 `dataset/manifest.json` should include at minimum:
 
 | Field | Example |
