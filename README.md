@@ -2,12 +2,17 @@
 
 **Fluid Flow Around an Obstacle** — machine learning for 2D incompressible flow around a cylinder (CFD simulation, datasets, reduced-order and neural predictors, physics-aware evaluation).
 
+## Python package
+
+Import name: **`ffaoml`**, using the [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) under `src/ffaoml/`. Repository layout and component boundaries are described in [documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md). Tensor, mask, and `metadata.csv` conventions are in [documentation/CONTRACTS.md](documentation/CONTRACTS.md).
+
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
 | [documentation/PRD.md](documentation/PRD.md) | Requirements and research questions |
 | [documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md) | System design and repository layout |
+| [documentation/CONTRACTS.md](documentation/CONTRACTS.md) | CFD / dataset / ML tensor contracts |
 | [documentation/TECH_STACK.md](documentation/TECH_STACK.md) | Technology choices |
 | [documentation/LEGAL.md](documentation/LEGAL.md) | Licensing overview |
 | [documentation/ATTRIBUTION.md](documentation/ATTRIBUTION.md) | How to give credit |
