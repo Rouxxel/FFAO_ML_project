@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ffaoml"
+version = "0.1.0"
+description = "Machine learning for 2D incompressible flow around a cylinder"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.11"
+authors = [{ name = "Sebastian Russo" }]
+keywords = [
+    "cfd",
+    "machine-learning",
+    "navier-stokes",
+    "fluid-dynamics",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+dependencies = []
+
+[project.optional-dependencies]
+core = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "pandas>=2.1",
+    "xarray>=2024.1",
+    "zarr>=2.16",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+]
+ml = [
+    "torch>=2.2",
+    "neuraloperator>=0.3",
+]
+cfd-dedalus = [
+    "dedalus>=3.0",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "pre-commit>=3.7",
+    "hydra-core>=1.3",
+]
+track = [
+    "mlflow>=2.14",
+]
+
+[project.urls]
+Homepage = "https://github.com/Rouxxel/FFAO_ML_project"
+Repository = "https://github.com/Rouxxel/FFAO_ML_project"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+    "slow: long-running tests (CFD, training)",
+    "gpu: requires CUDA",
+    "cfd: requires a CFD backend",
+]
