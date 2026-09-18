@@ -108,6 +108,16 @@ python scripts/train.py --run-id cnn_stage1 --epochs 50
 Writes `model.pt`, `config.yaml`, `preprocess_stats.json`, `dataset_manifest.json`
 (when present), and `training_summary.json` (includes comparison vs persistence).
 
+### 7. Model evaluation figures (ML Phase 3)
+
+```bash
+python scripts/evaluate_model.py --run-dir results/runs/cnn_stage1
+```
+
+Writes `<run-dir>/figures/` (`vorticity_pred_vs_true.png`, `error_vs_horizon.png`,
+`rollout_stability.png`) and `model_eval_metrics.json`. Re-wise heatmaps are deferred
+to Stage 3.
+
 ## Python package
 
 Import name: **`ffaoml`**, [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) under `src/ffaoml/`. Layout and components:
