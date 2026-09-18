@@ -1,12 +1,25 @@
-"""Hydra configuration composition."""
+"""
+#############################################################################
+### Hydra configuration tests
+###
+### @file test_config.py
+### @author Sebastian Russo
+### @date 2026
+#############################################################################
 
+Compose default and override configs; verify run-dir helpers and seeding.
+"""
+
+# Native imports
 from pathlib import Path
 
+# Third-party imports
 import pytest
 from hydra import compose, initialize_config_dir
 from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
 
+# Project imports
 from ffaoml.config import (
     config_dir,
     seed_from_config,
@@ -14,16 +27,23 @@ from ffaoml.config import (
     write_resolved_config,
 )
 
+"""CONSTANTS-----------------------------------------------------------"""
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+"""FIXTURES-----------------------------------------------------------"""
 
 
 @pytest.fixture(scope="module")
 def default_config():
+    """Composed root ``config`` with default Hydra groups."""
     with initialize_config_dir(
         config_dir=str(config_dir(REPO_ROOT)),
         version_base="1.3",
     ):
         yield compose(config_name="config")
+
+
+"""TESTS-----------------------------------------------------------"""
 
 
 def test_compose_loads_default_groups(default_config) -> None:

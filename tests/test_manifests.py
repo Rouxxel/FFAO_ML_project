@@ -1,9 +1,22 @@
-"""Dataset and checkpoint manifest schemas."""
+"""
+#############################################################################
+### Manifest schema tests
+###
+### @file test_manifests.py
+### @author Sebastian Russo
+### @date 2026
+#############################################################################
 
+Round-trip JSON manifests, config/file hashing, and checkpoint bundle checks.
+"""
+
+# Native imports
 from pathlib import Path
 
+# Third-party imports
 from omegaconf import OmegaConf
 
+# Project imports
 from ffaoml.manifests import (
     CHECKPOINT_BUNDLE_FILES,
     DatasetManifest,
@@ -13,7 +26,10 @@ from ffaoml.manifests import (
     validate_checkpoint_bundle,
 )
 
+"""CONSTANTS-----------------------------------------------------------"""
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+"""TESTS-----------------------------------------------------------"""
 
 
 def test_dataset_manifest_roundtrip() -> None:

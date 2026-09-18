@@ -1,25 +1,45 @@
-"""CFD solver contract — stub backend."""
+"""
+#############################################################################
+### CFD stub backend tests
+###
+### @file test_cfd_stub.py
+### @author Sebastian Russo
+### @date 2026
+#############################################################################
 
+Contract test: stub solver writes ``fields.zarr`` and compatible ``metadata.csv``.
+"""
+
+# Native imports
 from pathlib import Path
 
+# Third-party imports
 import pytest
 from hydra import compose, initialize_config_dir
 from hydra.core.global_hydra import GlobalHydra
 
+# Project imports
 from ffaoml.cfd.solver import case_from_config, get_solver
 from ffaoml.config import config_dir
 from ffaoml.contracts import DEFAULT_FIELD_CHANNELS, METADATA_CSV_COLUMNS
 from ffaoml.data.io import FIELD_STORE_NAME, open_field_store
 from ffaoml.data.metadata import append_metadata_row, ensure_metadata_csv
 
+"""CONSTANTS-----------------------------------------------------------"""
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+"""FIXTURES-----------------------------------------------------------"""
 
 
 @pytest.fixture
 def stub_case() -> Path:
+    """Writable dataset root under ``.local_test_runs/``."""
     root = REPO_ROOT / ".local_test_runs" / "cfd_stub_case"
     root.mkdir(parents=True, exist_ok=True)
     return root
+
+
+"""TESTS-----------------------------------------------------------"""
 
 
 def test_stub_solver_writes_zarr_and_metadata(stub_case: Path) -> None:
