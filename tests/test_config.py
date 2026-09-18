@@ -60,7 +60,7 @@ def test_default_dataset_is_stage1_zenodo(default_config) -> None:
     assert cfg.dataset.source_id == "zenodo_re100"
     assert cfg.dataset.re == 100
     assert cfg.dataset.use_re_splits is False
-    assert cfg.dataset.temporal_split.train == [0, 105]
+    assert cfg.dataset.temporal_split.train == [0, 70]
 
 
 def test_re_splits_compose_when_selected() -> None:
