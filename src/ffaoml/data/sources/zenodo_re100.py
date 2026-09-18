@@ -40,6 +40,7 @@ from omegaconf import DictConfig
 from ffaoml.contracts import METADATA_CSV_COLUMNS
 from ffaoml.data.io import write_field_store
 from ffaoml.data.metadata import ensure_metadata_csv
+from ffaoml.data.resample import downsample_spatial
 from ffaoml.manifests import (
     build_dataset_manifest,
     dataset_manifest_path,
@@ -578,9 +579,30 @@ def import_stage1_from_config(
     )
     parsed = parse_upstream_file(upstream_path, dt=dt)
 
-    n_time, ny, nx = parsed.vorticity.shape
-    dx = float(np.median(np.diff(parsed.x))) if parsed.x.size > 1 else 1.0
-    dy = float(np.median(np.diff(parsed.y))) if parsed.y.size > 1 else 1.0
+    field_map = {
+        "velocity_x": parsed.velocity_x,
+        "velocity_y": parsed.velocity_y,
+        "pressure": parsed.pressure,
+        "vorticity": parsed.vorticity,
+    }
+    x_grid = parsed.x
+    y_grid = parsed.y
+    down_cfg = import_cfg.get("downsample") or {}
+    if bool(down_cfg.get("enabled", False)):
+        field_map, x_grid, y_grid, down_meta = downsample_spatial(
+            field_map,
+            x_grid,
+            y_grid,
+            target_nx=int(down_cfg.get("nx", 64)),
+            target_ny=int(down_cfg.get("ny", 64)),
+            order=int(down_cfg.get("order", 1)),
+        )
+    else:
+        down_meta = {"downsampled": False}
+
+    n_time, ny, nx = field_map["vorticity"].shape
+    dx = float(np.median(np.diff(x_grid))) if x_grid.size > 1 else 1.0
+    dy = float(np.median(np.diff(y_grid))) if y_grid.size > 1 else 1.0
 
     zarr_attrs = {
         "solver": "import:zenodo_re100",
@@ -596,12 +618,13 @@ def import_stage1_from_config(
         "dy": dy,
         "seed": seed,
         **parsed.attrs,
+        **down_meta,
     }
     # Cheap sanity: divergence should be finite in fluid interior when u,v exist.
     if np.any(parsed.velocity_x):
         sample_div = divergence_2d(
-            parsed.velocity_x[0],
-            parsed.velocity_y[0],
+            field_map["velocity_x"][0],
+            field_map["velocity_y"][0],
             dx,
             dy,
         )
@@ -612,14 +635,9 @@ def import_stage1_from_config(
     store_path = write_field_store(
         simulation_dir,
         time=parsed.time,
-        y=parsed.y,
-        x=parsed.x,
-        fields={
-            "velocity_x": parsed.velocity_x,
-            "velocity_y": parsed.velocity_y,
-            "pressure": parsed.pressure,
-            "vorticity": parsed.vorticity,
-        },
+        y=y_grid,
+        x=x_grid,
+        fields=field_map,
         attrs=zarr_attrs,
         time_chunk=time_chunk,
     )
