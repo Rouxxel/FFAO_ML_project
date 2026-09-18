@@ -20,20 +20,16 @@ Dataset stages and URLs: [documentation/DATA_SOURCES.md](documentation/DATA_SOUR
 | Layer | State |
 |-------|--------|
 | Package `ffaoml`, physics, Hydra configs, manifests, CI | Ready |
-| Stage 1 data on disk (`dataset/`) | Not imported yet |
-| ML training | Not started |
+| Stage 1 import, Zarr layout, validation figures | Ready (scripts below) |
+| ML `FlowDataset` / normalization (Stage 1 temporal splits) | Ready |
+| Full CNN training | Not started |
 
-**Suggested next step:** import the small **Zenodo Re=100** dataset (Stage 1) into
-`dataset/` using the conventions in [CONTRACTS.md](documentation/CONTRACTS.md) and
-[REPRODUCIBILITY.md](documentation/REPRODUCIBILITY.md). In parallel, a CFD **solver
-stub** can validate the export schema before full simulations.
+## Stage 1 data (Zenodo Re ≈ 100)
 
-## Python package
+Catalog and attribution: [documentation/DATA_SOURCES.md](documentation/DATA_SOURCES.md).  
+On-disk layout: [documentation/CONTRACTS.md](documentation/CONTRACTS.md).
 
-Import name: **`ffaoml`**, [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) under `src/ffaoml/`. Layout and components:
-[documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md).
-
-### Install (development)
+### 1. Install
 
 ```bash
 python -m venv .venv
@@ -41,10 +37,59 @@ python -m venv .venv
 # Linux/macOS: source .venv/bin/activate
 python -m pip install -U pip
 python -m pip install -e ".[core,dev]"
+# Optional for DataLoader smoke tests and training:
+python -m pip install -e ".[ml]"
 ```
 
-Optional extras: `ml`, `cfd-dedalus`, `track` (see `pyproject.toml`).  
-Platforms: [documentation/setup/PLATFORMS.md](documentation/setup/PLATFORMS.md).
+### 2. Import into `dataset/`
+
+```bash
+python scripts/download_stage1_zenodo.py
+```
+
+If the HDF5 is not listed on the [Zenodo record](https://zenodo.org/records/18669296)
+yet, place `cylinder_re100_grid64_last100.h5` under `.cache/zenodo_stage1/` or pass:
+
+```bash
+python scripts/download_stage1_zenodo.py --local-file path/to/cylinder_re100_grid64_last100.h5
+```
+
+This writes `dataset/simulations/re_100_zenodo/fields.zarr`, `dataset/metadata.csv`,
+and `dataset/manifest.json` (see `configs/dataset/stage1_zenodo.yaml`).
+
+More detail: [experiments/stage1_zenodo_import.md](experiments/stage1_zenodo_import.md).
+
+### 3. CFD validation figures
+
+```bash
+python scripts/validate_stage1_zenodo.py
+```
+
+Outputs under `results/cfd_validation/stage1_zenodo/` (snapshots, shedding GIF,
+`SUMMARY.md`, `metrics.json`).
+
+### 4. ML data loading (Phase 0)
+
+After import, Python can build one-step windows without hard-coded paths:
+
+```python
+from hydra import compose, initialize_config_dir
+from ffaoml.config import config_dir
+from ffaoml.ml import build_flow_datasets, fit_preprocess_stats
+
+with initialize_config_dir(config_dir="configs", version_base="1.3"):
+    cfg = compose(config_name="config")
+stats = fit_preprocess_stats(cfg)  # train time range only
+datasets = build_flow_datasets(cfg, stats=stats)
+sample = datasets["train"][0]  # input/target tensors (C, H, W)
+```
+
+Switch to multi-Re simulation splits (Stage 3): `dataset=splits` in Hydra overrides.
+
+## Python package
+
+Import name: **`ffaoml`**, [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) under `src/ffaoml/`. Layout and components:
+[documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md).
 
 ### Verify
 
@@ -52,10 +97,15 @@ Platforms: [documentation/setup/PLATFORMS.md](documentation/setup/PLATFORMS.md).
 python -c "import ffaoml; print(ffaoml.__version__)"
 pytest -m "not slow and not gpu and not cfd"
 python scripts/compose_config.py
-ruff check src tests && ruff format --check src tests
+ruff check src tests scripts && ruff format --check src tests scripts
 ```
 
 CI: [documentation/setup/CI.md](documentation/setup/CI.md) (GitHub Actions).
+
+### Release tags (optional)
+
+- `foundation-v0.1` — package, configs, CI baseline  
+- `data-stage1-v0.1` — Stage 1 import + validation + ML Phase 0 loaders (after local import/validation)
 
 ## Documentation
 
@@ -82,6 +132,6 @@ This project is **open source**. You may use the code and published results if y
 
 See [NOTICE](NOTICE) and [documentation/ATTRIBUTION.md](documentation/ATTRIBUTION.md).
 Academic citation: [CITATION.cff](CITATION.cff) — keep `version` aligned with
-`pyproject.toml` when tagging releases (e.g. `foundation-v0.1`).
+`pyproject.toml` when tagging releases.
 
 **Copyright © 2026 Sebastian Russo**
