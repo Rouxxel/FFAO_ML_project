@@ -1,10 +1,24 @@
-"""Physics utilities (PRD §8)."""
+"""
+#############################################################################
+### Physics utility tests
+###
+### @file test_physics.py
+### @author Sebastian Russo
+### @date 2026
+#############################################################################
 
+Unit tests for Reynolds number, divergence, and force/shedding coefficients
+(PRD §8).
+"""
+
+# Native imports
 import math
 
+# Third-party imports
 import numpy as np
 import pytest
 
+# Project imports
 from ffaoml.physics.coefficients import (
     dominant_frequency_from_signal,
     drag_coefficient,
@@ -13,6 +27,8 @@ from ffaoml.physics.coefficients import (
 )
 from ffaoml.physics.navier_stokes import divergence_2d
 from ffaoml.physics.reynolds import reynolds_number
+
+"""TESTS-----------------------------------------------------------"""
 
 
 def test_reynolds_number_known_value() -> None:
