@@ -1,7 +1,6 @@
 # Continuous integration
 
-GitHub Actions workflows follow the patterns in the repository root guide
-[`min_yml_flow.md`](../../min_yml_flow.md) (portable CI reference). This project
+GitHub Actions workflows follow the patterns in the repository root guide. This project
 is a **single Python package** at the repo root — no frontend/backend split.
 
 ## Layout
@@ -55,7 +54,6 @@ Optional: require `supply-chain` once `pip audit` runs with `continue-on-error: 
 
 ## Adding workflows later
 
-| Need | Pattern (from `min_yml_flow.md`) |
 |------|----------------------------------|
 | Nightly CFD smoke | `schedule` + `pytest -m cfd` on `ubuntu-24.04` |
 | ML training smoke | Separate job with `pip install -e ".[core,ml,dev]"`, CPU-only torch |
