@@ -52,6 +52,8 @@ def test_compose_loads_default_groups(default_config) -> None:
     assert cfg.model.name == "cnn"
     assert cfg.train.batch_size == 8
     assert cfg.paths.runs_root == "results/runs"
+    assert cfg.eval.split == "val"
+    assert cfg.eval.rollout_horizon == 50
 
 
 def test_default_dataset_is_stage1_zenodo(default_config) -> None:
