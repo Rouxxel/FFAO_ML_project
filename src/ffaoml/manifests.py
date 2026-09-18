@@ -1,5 +1,17 @@
-"""Dataset and training-run manifest schemas (reproducibility)."""
+"""
+#############################################################################
+### Dataset and run manifests
+###
+### @file manifests.py
+### @author Sebastian Russo
+### @date 2026
+#############################################################################
 
+JSON schemas and helpers for dataset provenance and checkpoint bundles
+(reproducibility; see ``documentation/REPRODUCIBILITY.md``).
+"""
+
+# Native imports
 from __future__ import annotations
 
 import hashlib
@@ -10,8 +22,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+# Third-party imports
 from omegaconf import DictConfig, OmegaConf
 
+"""CONSTANTS-----------------------------------------------------------"""
 DATASET_MANIFEST_SCHEMA_VERSION = 1
 CHECKPOINT_BUNDLE_SCHEMA_VERSION = 1
 
@@ -26,10 +40,12 @@ CHECKPOINT_BUNDLE_FILES: tuple[str, ...] = (
     "dataset_manifest.json",
 )
 
+"""TYPES-----------------------------------------------------------"""
+
 
 @dataclass
 class DatasetManifest:
-    """Provenance for ``dataset/manifest.json`` (see documentation/DATA_SOURCES.md)."""
+    """Provenance record for ``dataset/manifest.json``."""
 
     schema_version: int
     stage: int
@@ -42,15 +58,34 @@ class DatasetManifest:
     notes: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize to a JSON-compatible dict."""
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> DatasetManifest:
+        """
+        Build a manifest from parsed JSON, ignoring unknown keys.
+
+        Parameters:
+            data (dict[str, Any]): Parsed manifest object.
+
+        Returns:
+            DatasetManifest: Validated instance.
+        """
         known = {f.name for f in cls.__dataclass_fields__.values()}
         filtered = {k: v for k, v in data.items() if k in known}
         return cls(**filtered)
 
     def write_json(self, path: str | Path) -> Path:
+        """
+        Write this manifest to disk.
+
+        Parameters:
+            path (str | Path): Destination ``manifest.json`` path.
+
+        Returns:
+            Path: Written file path.
+        """
         destination = Path(path)
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(
@@ -61,13 +96,22 @@ class DatasetManifest:
 
     @classmethod
     def read_json(cls, path: str | Path) -> DatasetManifest:
+        """
+        Load a manifest from disk.
+
+        Parameters:
+            path (str | Path): ``manifest.json`` path.
+
+        Returns:
+            DatasetManifest: Parsed instance.
+        """
         data = json.loads(Path(path).read_text(encoding="utf-8"))
         return cls.from_dict(data)
 
 
 @dataclass
 class CheckpointBundleManifest:
-    """Describes a training run directory under ``results/runs/<run_id>/``."""
+    """Describes artifacts under ``results/runs/<run_id>/``."""
 
     schema_version: int
     created_at: str
@@ -79,15 +123,34 @@ class CheckpointBundleManifest:
     )
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize to a JSON-compatible dict."""
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CheckpointBundleManifest:
+        """
+        Build a bundle manifest from parsed JSON, ignoring unknown keys.
+
+        Parameters:
+            data (dict[str, Any]): Parsed bundle object.
+
+        Returns:
+            CheckpointBundleManifest: Validated instance.
+        """
         known = {f.name for f in cls.__dataclass_fields__.values()}
         filtered = {k: v for k, v in data.items() if k in known}
         return cls(**filtered)
 
     def write_json(self, path: str | Path) -> Path:
+        """
+        Write this bundle manifest to disk.
+
+        Parameters:
+            path (str | Path): Destination JSON path.
+
+        Returns:
+            Path: Written file path.
+        """
         destination = Path(path)
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(
@@ -98,16 +161,37 @@ class CheckpointBundleManifest:
 
     @classmethod
     def read_json(cls, path: str | Path) -> CheckpointBundleManifest:
+        """
+        Load a bundle manifest from disk.
+
+        Parameters:
+            path (str | Path): JSON file path.
+
+        Returns:
+            CheckpointBundleManifest: Parsed instance.
+        """
         data = json.loads(Path(path).read_text(encoding="utf-8"))
         return cls.from_dict(data)
 
 
+"""HELPERS-----------------------------------------------------------"""
+
+
 def utc_now_iso() -> str:
+    """Return current UTC time as ISO-8601 (second resolution)."""
     return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 def git_short_commit(repo_root: str | Path | None = None) -> str | None:
-    """Return short git SHA or None if git is unavailable."""
+    """
+    Return the short git SHA for the repository.
+
+    Parameters:
+        repo_root (str | Path | None): Git working tree root.
+
+    Returns:
+        str | None: Short commit hash, or ``None`` if git is unavailable.
+    """
     root = Path(repo_root or Path.cwd())
     try:
         result = subprocess.run(
@@ -123,7 +207,15 @@ def git_short_commit(repo_root: str | Path | None = None) -> str | None:
 
 
 def hash_config(cfg: DictConfig | dict[str, Any]) -> str:
-    """Stable SHA-256 hex digest (first 16 chars) of a resolved config."""
+    """
+    Stable SHA-256 digest (first 16 hex chars) of a resolved config.
+
+    Parameters:
+        cfg (DictConfig | dict[str, Any]): Config to hash.
+
+    Returns:
+        str: Short hex digest.
+    """
     if isinstance(cfg, DictConfig):
         payload = OmegaConf.to_yaml(cfg, resolve=True)
     else:
@@ -133,17 +225,34 @@ def hash_config(cfg: DictConfig | dict[str, Any]) -> str:
 
 
 def hash_file(path: str | Path) -> str:
-    """SHA-256 hex digest (first 16 chars) of a file's contents."""
+    """
+    SHA-256 digest (first 16 hex chars) of a file's contents.
+
+    Parameters:
+        path (str | Path): File to hash.
+
+    Returns:
+        str: Short hex digest.
+    """
     data = Path(path).read_bytes()
     return hashlib.sha256(data).hexdigest()[:16]
 
 
 def dataset_manifest_path(dataset_root: str | Path) -> Path:
+    """Return ``<dataset_root>/manifest.json``."""
     return Path(dataset_root) / DATASET_MANIFEST_FILENAME
 
 
 def validate_checkpoint_bundle(run_dir: str | Path) -> list[str]:
-    """Return paths of required checkpoint files that are missing."""
+    """
+    List required checkpoint files that are missing from a run directory.
+
+    Parameters:
+        run_dir (str | Path): ``results/runs/<run_id>/`` path.
+
+    Returns:
+        list[str]: Basenames of missing required files (empty if complete).
+    """
     root = Path(run_dir)
     missing: list[str] = []
     for name in CHECKPOINT_BUNDLE_FILES:
@@ -162,7 +271,21 @@ def build_dataset_manifest(
     repo_root: str | Path | None = None,
     notes: str | None = None,
 ) -> DatasetManifest:
-    """Factory for import/generation pipelines."""
+    """
+    Factory for import or generation pipelines.
+
+    Parameters:
+        stage (int): Dataset stage (see ``documentation/DATA_SOURCES.md``).
+        source_id (str): Stable source identifier.
+        source_url (str): Download or citation URL.
+        config_hash (str | None): Hash of import config.
+        git_commit (str | None): Override git SHA; auto-detected when omitted.
+        repo_root (str | Path | None): Repo root for git detection.
+        notes (str | None): Free-form provenance notes.
+
+    Returns:
+        DatasetManifest: Ready to write under ``dataset/``.
+    """
     commit = git_commit if git_commit is not None else git_short_commit(repo_root)
     return DatasetManifest(
         schema_version=DATASET_MANIFEST_SCHEMA_VERSION,
