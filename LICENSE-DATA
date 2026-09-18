@@ -1,0 +1,56 @@
+FFAO ML Project — Data and Research Results License
+
+Copyright 2026 Sebastian Russo
+
+--------------------------------------------------------------------------------
+
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+This license applies to research artifacts published from this repository,
+including but not limited to:
+
+  * CFD simulation outputs (velocity, pressure, vorticity fields over time)
+  * Datasets and metadata (e.g. under dataset/, manifests, metadata.csv)
+  * Trained model checkpoints and exported weights
+  * Evaluation metrics, plots, animations, and tables produced by the project
+  * Aggregated or derived numerical results (e.g. Cd, Cl, St, error curves)
+    when distributed as project outputs
+
+unless a specific file, directory, or release explicitly states a different
+license.
+
+--------------------------------------------------------------------------------
+
+You are free to:
+
+  * Share — copy and redistribute the material in any medium or format
+  * Adapt — remix, transform, and build upon the material for any purpose,
+    even commercially
+
+Under the following terms:
+
+  * Attribution — You must give appropriate credit, provide a link to the
+    license, and indicate if changes were made. You may do so in any
+    reasonable manner, but not in any way that suggests the licensor
+    endorses you or your use.
+
+No additional restrictions — You may not apply legal terms or technological
+measures that legally restrict others from doing anything the license permits.
+
+--------------------------------------------------------------------------------
+
+Full legal code:
+  https://creativecommons.org/licenses/by/4.0/legalcode
+
+Human-readable summary (not a substitute for the license):
+  https://creativecommons.org/licenses/by/4.0/
+
+--------------------------------------------------------------------------------
+
+How to attribute
+
+See NOTICE and documentation/ATTRIBUTION.md in this repository for recommended
+credit lines, citation formats, and examples for papers, software, and
+redistributions.
+
+SPDX-License-Identifier: CC-BY-4.0

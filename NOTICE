@@ -1,0 +1,72 @@
+FFAO ML Project (Fluid Flow Around an Obstacle)
+Copyright 2026 Sebastian Russo
+
+This product includes software developed as part of the FFAO ML Project
+(machine-learning models and tooling for 2D flow around a cylinder).
+
+Project repository:
+  https://github.com/Rouxxel/FFAO_ML_project
+
+================================================================================
+ATTRIBUTION (required)
+================================================================================
+
+If you use this project’s SOURCE CODE (including copying, modifying,
+distributing, or incorporating it into another product), you must:
+
+  1. Retain this NOTICE file (or its attribution section) in distributions
+     of the code, as required by the Apache License 2.0; and
+
+  2. Include the copyright notice and a copy of the LICENSE file; and
+
+  3. Give credit to the project and author in documentation, about screens,
+     or other reasonable place where you describe origins of the software.
+
+Recommended credit line for software:
+
+  "Based on the FFAO ML Project (Fluid Flow Around an Obstacle) by
+   Sebastian Russo (https://github.com/Rouxxel/FFAO_ML_project),
+   licensed under Apache-2.0."
+
+If you use this project’s RESULTS OR DATA (including but not limited to
+CFD fields, datasets under dataset/, exported Zarr/NetCDF stores, trained
+model weights, evaluation metrics, plots, animations, tables, or numerical
+values reproduced from project outputs), you must:
+
+  1. Give appropriate credit to Sebastian Russo and the FFAO ML Project; and
+
+  2. Provide a link to the project repository (or the specific release URL
+     you obtained the artifacts from); and
+
+  3. Indicate if you modified the data or results; and
+
+  4. Comply with LICENSE-DATA (CC BY 4.0).
+
+Recommended credit line for data and results:
+
+  "Data [or: Results / Figures / Model weights] from the FFAO ML Project
+   (Fluid Flow Around an Obstacle) by Sebastian Russo
+   (https://github.com/Rouxxel/FFAO_ML_project), licensed under CC BY 4.0."
+
+For academic work, also cite the project using CITATION.cff (see repository
+root) or the BibTeX entry in documentation/ATTRIBUTION.md.
+
+================================================================================
+THIRD-PARTY COMPONENTS
+================================================================================
+
+This project depends on open-source libraries (e.g. NumPy, SciPy, PyTorch,
+Matplotlib, optional CFD backends). Those components are governed by their
+own licenses. This NOTICE does not list every transitive dependency; see
+project dependency files (e.g. pyproject.toml) and each library’s license
+when you redistribute a bundled environment.
+
+When this file is updated to list bundled or vendored third-party code,
+retain those notices in distributions as required by the respective licenses.
+
+================================================================================
+UPDATES
+================================================================================
+
+Copyright years, release URLs, and third-party notices may be updated as the
+project grows. Check the NOTICE file in the tag or commit you are using.

@@ -539,3 +539,19 @@ The project is successful if:
 ## 20. Final Research Question
 
 > **To what extent can a learned dynamical model reproduce and generalize the temporal evolution and physically relevant quantities of fluid flow around an obstacle across different Reynolds-number regimes?**
+
+---
+
+## 21. Licensing and attribution
+
+The project is **open source**. Shared artifacts should remain usable for research and education while requiring **appropriate credit** to the author and project.
+
+| Material | License | Reference |
+|----------|---------|-----------|
+| Source code, configs, tests | Apache 2.0 | Repository `LICENSE` |
+| Datasets, simulation exports, checkpoints, figures, metrics | CC BY 4.0 | Repository `LICENSE-DATA` |
+| Attribution requirements | — | `NOTICE`, [ATTRIBUTION.md](./ATTRIBUTION.md) |
+
+When publishing datasets or results (§7, §17), include enough metadata (version, commit, manifest) that others can cite the exact artifact. See [LEGAL.md](./LEGAL.md) and [CITATION.cff](../CITATION.cff).
+
+**Copyright:** Sebastian Russo (update NOTICE and attribution docs if maintainers change).

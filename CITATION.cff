@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: "FFAO ML Project: Machine Learning for Fluid Flow Around an Obstacle"
+message: "If you use this software, data, or results, please cite it as below."
+type: software
+authors:
+  - family-names: Russo
+    given-names: Sebastian
+repository-code: "https://github.com/Rouxxel/FFAO_ML_project"
+url: "https://github.com/Rouxxel/FFAO_ML_project"
+license: Apache-2.0
+version: 0.1.0
+date-released: 2026-09-18
+keywords:
+  - computational-fluid-dynamics
+  - machine-learning
+  - navier-stokes
+  - cylinder-flow
+  - neural-operators
+abstract: "Open research codebase studying whether machine-learning models can learn and predict two-dimensional incompressible flow around a cylinder and generalize across Reynolds numbers."

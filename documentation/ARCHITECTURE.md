@@ -250,7 +250,14 @@ FFAO_ML_project/
 ├── documentation/
 │   ├── PRD.md
 │   ├── TECH_STACK.md
-│   └── ARCHITECTURE.md
+│   ├── ARCHITECTURE.md
+│   ├── LEGAL.md
+│   └── ATTRIBUTION.md
+│
+├── LICENSE                       # Apache 2.0 (software)
+├── LICENSE-DATA                  # CC BY 4.0 (datasets & results)
+├── NOTICE                        # Attribution for redistributions
+├── CITATION.cff                  # Academic / software citation metadata
 │
 ├── configs/
 │   ├── config.yaml              # Hydra root defaults
@@ -384,6 +391,17 @@ Each checkpoint directory should include:
 - No secrets in repo; optional API keys for W&B via environment variables.
 - Large artifacts only under `dataset/` and `results/` (gitignored); optional DVC remote.
 
+### 8.5 Licensing and redistribution
+
+Artifacts produced by this architecture fall under two licenses (see [LEGAL.md](./LEGAL.md)):
+
+| Path / artifact | Typical license |
+|-----------------|-----------------|
+| `src/`, `configs/`, `scripts/`, `tests/` | Apache 2.0 |
+| `dataset/`, `results/`, released checkpoints and figures | CC BY 4.0 |
+
+Redistributions of code must retain [LICENSE](../LICENSE) and [NOTICE](../NOTICE). Uses of published data or results must credit the FFAO ML Project per [ATTRIBUTION.md](./ATTRIBUTION.md). Dataset manifests should record version/commit for citation ([PRD.md](./PRD.md) §17, §21).
+
 ---
 
 ## 9. Research experiments (mapping)
@@ -415,3 +433,5 @@ Each checkpoint directory should include:
 
 - [PRD.md](./PRD.md) — requirements and success criteria
 - [TECH_STACK.md](./TECH_STACK.md) — libraries, optional groups, platform notes
+- [LEGAL.md](./LEGAL.md) — licensing overview
+- [ATTRIBUTION.md](./ATTRIBUTION.md) — how to give credit

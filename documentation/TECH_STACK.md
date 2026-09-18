@@ -221,3 +221,5 @@ pip install -e ".[core,ml,dev,cfd-dedalus]"
 
 - [PRD.md](./PRD.md) — product and research requirements
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — components, data flow, repository layout
+- [LEGAL.md](./LEGAL.md) — Apache 2.0 (code) and CC BY 4.0 (data/results)
+- [ATTRIBUTION.md](./ATTRIBUTION.md) — credit and citation requirements

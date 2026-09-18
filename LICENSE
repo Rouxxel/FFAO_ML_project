@@ -1,3 +1,28 @@
+FFAO ML Project — Fluid Flow Around an Obstacle
+(Machine learning for computational fluid dynamics research)
+
+Copyright 2026 Sebastian Russo
+
+Licensing overview (see also NOTICE and documentation/ATTRIBUTION.md):
+
+  * Source code in this repository (including configs and tests):
+    Apache License 2.0 — text below.
+
+  * Documentation in documentation/ (unless a file states otherwise):
+    Apache License 2.0, same as source code.
+
+  * Datasets, simulation outputs, model checkpoints, figures, metrics,
+    and other research artifacts published from this project:
+    Creative Commons Attribution 4.0 International (CC BY 4.0) — see
+    LICENSE-DATA, unless a specific release or file states otherwise.
+
+You must give appropriate credit when using this project’s code or results.
+The NOTICE file and documentation/ATTRIBUTION.md describe how to attribute.
+
+SPDX-License-Identifier: Apache-2.0
+
+--------------------------------------------------------------------------------
+
                                  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
