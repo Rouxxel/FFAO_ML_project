@@ -86,6 +86,16 @@ sample = datasets["train"][0]  # input/target tensors (C, H, W)
 
 Switch to multi-Re simulation splits (Stage 3): `dataset=splits` in Hydra overrides.
 
+### 5. Baseline evaluation (ML Phase 1)
+
+```bash
+python scripts/evaluate.py
+python scripts/evaluate.py --run-id baseline_val --split val
+```
+
+Writes `results/runs/<run_id>/metrics.json` with persistence and linear rollout
+curves (`configs/eval/default.yaml`).
+
 ## Python package
 
 Import name: **`ffaoml`**, [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) under `src/ffaoml/`. Layout and components:
