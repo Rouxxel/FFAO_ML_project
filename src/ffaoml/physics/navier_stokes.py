@@ -1,10 +1,26 @@
-"""Discrete differential operators on structured 2D grids."""
+"""
+#############################################################################
+### Discrete Navier–Stokes operators
+###
+### @file navier_stokes.py
+### @author Sebastian Russo
+### @date 2026
+#############################################################################
 
+Central-difference operators on uniform structured 2D grids for validation and
+physics-informed losses.
+"""
+
+# Native imports
 from __future__ import annotations
 
+# Third-party imports
 import numpy as np
 
+"""TYPES-----------------------------------------------------------"""
 Array2D = np.ndarray
+
+"""OPERATORS-----------------------------------------------------------"""
 
 
 def divergence_2d(
@@ -15,27 +31,27 @@ def divergence_2d(
     *,
     solid_mask: Array2D | None = None,
 ) -> Array2D:
-    """Central-difference divergence ∇·u on a uniform structured grid.
+    """
+    Central-difference divergence ∇·u on a uniform structured grid.
 
     Interior stencil (indices with full neighbours):
 
         ∂u/∂x ≈ (u[i, j+1] - u[i, j-1]) / (2 dx)
         ∂v/∂y ≈ (v[i+1, j] - v[i-1, j]) / (2 dy)
 
-    Boundary rows/columns are set to ``nan`` because neighbours are not defined.
-    This matches typical post-processing on CFD snapshots where walls use ghost
-    cells not stored in the export.
+    Boundary rows/columns are ``nan`` because neighbours are not stored in
+    typical CFD exports.
 
-    Args:
-        velocity_x: ``u`` component, shape ``(ny, nx)``.
-        velocity_y: ``v`` component, same shape as ``velocity_x``.
-        dx: Grid spacing in x.
-        dy: Grid spacing in y.
-        solid_mask: Optional bool array; ``True`` marks solid cells (e.g. cylinder).
-            Solid cells are forced to ``nan`` in the output.
+    Parameters:
+        velocity_x (Array2D): ``u`` component, shape ``(ny, nx)``.
+        velocity_y (Array2D): ``v`` component, same shape as ``velocity_x``.
+        dx (float): Grid spacing in x.
+        dy (float): Grid spacing in y.
+        solid_mask (Array2D | None): If set, ``True`` marks solid cells (output
+            forced to ``nan`` there).
 
     Returns:
-        Divergence field, shape ``(ny, nx)``.
+        Array2D: Divergence field, shape ``(ny, nx)``.
 
     Raises:
         ValueError: On shape mismatch or non-positive spacing.

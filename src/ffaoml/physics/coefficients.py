@@ -1,15 +1,44 @@
-"""Integral force coefficients and Strouhal number (PRD §8)."""
+"""
+#############################################################################
+### Force coefficients and Strouhal number
+###
+### @file coefficients.py
+### @author Sebastian Russo
+### @date 2026
+#############################################################################
 
+Integral force coefficients, Strouhal number, and spectral helpers for
+vortex-shedding analysis (PRD §8).
+"""
+
+# Native imports
 from __future__ import annotations
 
+# Third-party imports
 import numpy as np
 from scipy.fft import rfft, rfftfreq
 
+"""TYPES-----------------------------------------------------------"""
 Array1D = np.ndarray
+
+"""REFERENCE SCALES-----------------------------------------------------------"""
 
 
 def dynamic_pressure_scale(rho: float, u: float, d: float) -> float:
-    """Reference scale ½ ρ U² D used for Cd and Cl."""
+    """
+    Reference scale ½ ρ U² D used for Cd and Cl.
+
+    Parameters:
+        rho (float): Fluid density.
+        u (float): Reference speed.
+        d (float): Reference length (diameter).
+
+    Returns:
+        float: Force scale in consistent units.
+
+    Raises:
+        ValueError: If any argument is non-positive.
+    """
     if rho <= 0 or u <= 0 or d <= 0:
         raise ValueError("rho, u, and d must be positive")
     return 0.5 * rho * u**2 * d
@@ -21,7 +50,18 @@ def drag_coefficient(
     u: float,
     d: float,
 ) -> float:
-    """Drag coefficient Cd = Fd / (½ ρ U² D)."""
+    """
+    Drag coefficient Cd = Fd / (½ ρ U² D).
+
+    Parameters:
+        force_drag (float): Drag force.
+        rho (float): Fluid density.
+        u (float): Reference speed.
+        d (float): Cylinder diameter.
+
+    Returns:
+        float: Dimensionless Cd.
+    """
     return force_drag / dynamic_pressure_scale(rho, u, d)
 
 
@@ -31,15 +71,42 @@ def lift_coefficient(
     u: float,
     d: float,
 ) -> float:
-    """Lift coefficient Cl = Fl / (½ ρ U² D)."""
+    """
+    Lift coefficient Cl = Fl / (½ ρ U² D).
+
+    Parameters:
+        force_lift (float): Lift force.
+        rho (float): Fluid density.
+        u (float): Reference speed.
+        d (float): Cylinder diameter.
+
+    Returns:
+        float: Dimensionless Cl.
+    """
     return force_lift / dynamic_pressure_scale(rho, u, d)
 
 
 def strouhal_number(frequency: float, d: float, u: float) -> float:
-    """Strouhal number St = f D / U."""
+    """
+    Strouhal number St = f D / U.
+
+    Parameters:
+        frequency (float): Shedding frequency (Hz).
+        d (float): Cylinder diameter.
+        u (float): Free-stream speed.
+
+    Returns:
+        float: Strouhal number.
+
+    Raises:
+        ValueError: If speed or diameter is non-positive.
+    """
     if u <= 0 or d <= 0:
         raise ValueError("u and d must be positive")
     return frequency * d / u
+
+
+"""SIGNAL ANALYSIS-----------------------------------------------------------"""
 
 
 def dominant_frequency_from_signal(
@@ -48,18 +115,19 @@ def dominant_frequency_from_signal(
     *,
     min_frequency: float = 0.0,
 ) -> float:
-    """Estimate dominant frequency (Hz) from a uniformly sampled time series.
+    """
+    Estimate dominant frequency (Hz) from a uniformly sampled time series.
 
-    Uses the magnitude of the real FFT and ignores the DC component. When
-    ``min_frequency`` is set, bins below that frequency are excluded (useful to
-    skip very low drift).
+    Uses the magnitude of the real FFT and ignores the DC component. Bins below
+    ``min_frequency`` are excluded when that threshold is positive.
 
-    Args:
-        signal: 1D samples vs time.
-        dt: Sample interval (seconds).
+    Parameters:
+        signal (Array1D): 1D samples vs time.
+        dt (float): Sample interval (seconds).
+        min_frequency (float): Minimum frequency (Hz) to consider for the peak.
 
     Returns:
-        Frequency in Hz of the largest remaining spectral peak.
+        float: Frequency of the largest remaining spectral peak.
 
     Raises:
         ValueError: If ``dt`` is non-positive or the signal is too short.

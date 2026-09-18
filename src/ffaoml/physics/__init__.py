@@ -1,5 +1,17 @@
-"""Dimensionless numbers and field operators (CFD-backend agnostic)."""
+"""
+#############################################################################
+### Physics utilities package
+###
+### @file physics/__init__.py
+### @author Sebastian Russo
+### @date 2026
+#############################################################################
 
+Dimensionless numbers, integral coefficients, and discrete field operators
+(CFD-backend agnostic; PRD §8).
+"""
+
+# Project imports
 from ffaoml.physics.coefficients import (
     dominant_frequency_from_signal,
     drag_coefficient,
