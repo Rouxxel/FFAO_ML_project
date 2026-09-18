@@ -42,3 +42,6 @@ use_re_splits: false
 normalization:
   fit_split: train
   per_channel: true
+
+prediction:
+  delta_steps: 1
