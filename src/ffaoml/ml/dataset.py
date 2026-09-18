@@ -115,6 +115,60 @@ class FlowDataset:
         }
 
 
+class FlowUnrollDataset:
+    """
+    One input frame and a stack of ``unroll_steps`` target frames for ConvLSTM.
+
+    Shares normalization with ``FlowDataset`` on the same temporal split.
+    """
+
+    def __init__(
+        self,
+        cfg: DictConfig,
+        split: str,
+        stats: PreprocessStats,
+        *,
+        unroll_steps: int = 1,
+    ) -> None:
+        """
+        Parameters:
+            cfg (DictConfig): Composed Hydra config.
+            split (str): ``train``, ``val``, or ``test``.
+            stats (PreprocessStats): Normalization from training data only.
+            unroll_steps (int): Number of future frames in each sample.
+        """
+        if unroll_steps < 1:
+            raise ValueError("unroll_steps must be >= 1")
+        self.unroll_steps = unroll_steps
+        self.re = float(cfg.dataset.re)
+        raw = load_split_tensor(cfg, split)
+        self._series = normalize_fields(raw, stats)
+
+    def __len__(self) -> int:
+        return max(0, self._series.shape[0] - self.unroll_steps)
+
+    def __getitem__(self, index: int) -> dict[str, Any]:
+        """
+        Return input at ``t`` and targets ``t+1..t+unroll_steps``.
+
+        Parameters:
+            index (int): Sample index within the split.
+
+        Returns:
+            dict[str, Any]: Keys ``input``, ``targets``, ``time_index``, ``re``.
+        """
+        if index < 0 or index >= len(self):
+            raise IndexError(index)
+        t = index
+        targets = self._series[t + 1 : t + 1 + self.unroll_steps]
+        return {
+            "input": self._series[t].astype(np.float32),
+            "targets": targets.astype(np.float32),
+            "time_index": t,
+            "re": self.re,
+        }
+
+
 def build_flow_datasets(
     cfg: DictConfig,
     *,
@@ -141,5 +195,35 @@ def build_flow_datasets(
                 name,
                 fitted,
                 delta_steps=delta_steps,
+            )
+    return out
+
+
+def build_flow_unroll_datasets(
+    cfg: DictConfig,
+    *,
+    unroll_steps: int,
+    stats: PreprocessStats | None = None,
+) -> dict[str, FlowUnrollDataset]:
+    """
+    Build train/val/test ``FlowUnrollDataset`` objects with shared normalization.
+
+    Parameters:
+        cfg (DictConfig): Composed config.
+        unroll_steps (int): Future frames per sample.
+        stats (PreprocessStats | None): Pre-fitted stats; computed on train if omitted.
+
+    Returns:
+        dict[str, FlowUnrollDataset]: Keys ``train``, ``val``, ``test``.
+    """
+    fitted = stats if stats is not None else fit_preprocess_stats(cfg)
+    out: dict[str, FlowUnrollDataset] = {}
+    for name in ("train", "val", "test"):
+        if name in cfg.dataset.temporal_split:
+            out[name] = FlowUnrollDataset(
+                cfg,
+                name,
+                fitted,
+                unroll_steps=unroll_steps,
             )
     return out
