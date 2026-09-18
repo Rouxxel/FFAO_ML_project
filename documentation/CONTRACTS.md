@@ -38,6 +38,9 @@ Each timestep must provide at least:
 Preferred on-disk representation: chunked **Zarr** stores with **xarray**
 semantics (see [TECH_STACK.md](./TECH_STACK.md)).
 
+**Code:** `ffaoml.data.io` (read/write), `ffaoml.data.catalog` (paths from config),
+`ffaoml.data.loading` (`(T, C, H, W)` windows via `dataset.temporal_split`).
+
 Directory layout (see [PRD.md](./PRD.md) §7):
 
 ```text

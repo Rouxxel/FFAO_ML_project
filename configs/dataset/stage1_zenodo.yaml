@@ -22,6 +22,11 @@ import:
   diameter: 1.0
   metadata_split: full
   time_chunk: 16
+  downsample:
+    enabled: false
+    nx: 64
+    ny: 64
+    order: 1
 
 # Time-based split within a single trajectory (typical HDF5: 100 snapshots).
 # Indices are inclusive start, exclusive end on the time dimension after import.
