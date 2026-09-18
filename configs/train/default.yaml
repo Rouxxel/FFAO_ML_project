@@ -11,3 +11,7 @@ device: cpu
 loss:
   field_mse: true
   divergence_weight: 0.0
+
+# ConvLSTM: unroll_steps > 1 enables truncated multi-step training loss.
+unroll_steps: 1
+teacher_forcing: true
