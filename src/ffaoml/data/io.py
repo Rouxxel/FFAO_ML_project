@@ -55,6 +55,7 @@ def write_field_store(
     fields: dict[str, np.ndarray],
     attrs: dict[str, Any] | None = None,
     solid_mask: np.ndarray | None = None,
+    time_chunk: int | None = None,
 ) -> Path:
     """
     Write required flow channels to ``fields.zarr``.
@@ -68,6 +69,7 @@ def write_field_store(
             names, each shape ``(n_steps, ny, nx)``.
         attrs (dict[str, Any] | None): Global Zarr attributes (Re, dt, etc.).
         solid_mask (np.ndarray | None): Optional ``(ny, nx)`` bool cylinder mask.
+        time_chunk (int | None): Zarr chunk size along time (defaults to full series).
 
     Returns:
         Path: Written Zarr directory.
@@ -103,7 +105,16 @@ def write_field_store(
         coords={"time": time, "y": y, "x": x},
         attrs=attrs or {},
     )
-    ds.to_zarr(store_path, mode="w")
+    encoding: dict[str, dict[str, tuple[int, ...]]] | None = None
+    if time_chunk is not None and time_chunk > 0:
+        chunk_t = min(int(time_chunk), int(time.size))
+        encoding = {
+            name: {"chunks": (chunk_t, y.size, x.size)}
+            for name in DEFAULT_FIELD_CHANNELS
+        }
+        if solid_mask is not None:
+            encoding["solid_mask"] = {"chunks": (y.size, x.size)}
+    ds.to_zarr(store_path, mode="w", encoding=encoding)
     return store_path
 
 
