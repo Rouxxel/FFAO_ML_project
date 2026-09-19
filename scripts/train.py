@@ -47,6 +47,11 @@ def main() -> None:
         "--epochs", type=int, default=None, help="Override train.epochs."
     )
     parser.add_argument(
+        "--model",
+        default=None,
+        help="Hydra model group (e.g. cnn, fno, reconstruct).",
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
         default=None,
@@ -57,6 +62,8 @@ def main() -> None:
     overrides: list[str] = []
     if args.epochs is not None:
         overrides.append(f"train.epochs={args.epochs}")
+    if args.model is not None:
+        overrides.append(f"model={args.model}")
 
     with initialize_config_dir(
         config_dir=str(config_dir(REPO_ROOT)),
