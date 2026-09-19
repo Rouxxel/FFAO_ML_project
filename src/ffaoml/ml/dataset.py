@@ -22,12 +22,19 @@ import numpy as np
 from omegaconf import DictConfig
 
 # Project imports
-from ffaoml.data.loading import load_split_tensor
+from ffaoml.data.catalog import lookup_metadata_row
+from ffaoml.data.loading import load_simulation_tensor, load_split_tensor
+from ffaoml.ml.conditioning import (
+    ReScaling,
+    append_re_channel,
+    condition_on_re_enabled,
+)
 from ffaoml.ml.preprocessing import (
     PreprocessStats,
     fit_preprocess_stats,
     normalize_fields,
 )
+from ffaoml.ml.splits import re_split_simulation_ids
 
 """TYPES-----------------------------------------------------------"""
 
@@ -169,14 +176,95 @@ class FlowUnrollDataset:
         }
 
 
+class FlowMultiReDataset:
+    """
+    One-step windows pooled across simulations in a Reynolds split (Stage 3).
+
+    When ``model.condition_on_re`` is true, appends a normalized Re channel to
+    inputs only (four field channels in targets).
+    """
+
+    def __init__(
+        self,
+        cfg: DictConfig,
+        split: str,
+        stats: PreprocessStats,
+        *,
+        delta_steps: int = 1,
+    ) -> None:
+        """
+        Parameters:
+            cfg (DictConfig): ``dataset=splits`` composed config.
+            split (str): ``train``, ``val``, or ``test`` (Re list + time window).
+            stats (PreprocessStats): Normalization from training Re only.
+            delta_steps (int): Prediction horizon in time indices.
+        """
+        if not bool(cfg.dataset.get("use_re_splits", False)):
+            raise ValueError("FlowMultiReDataset requires use_re_splits: true")
+        if delta_steps < 1:
+            raise ValueError("delta_steps must be >= 1")
+        self.cfg = cfg
+        self.split = split
+        self.stats = stats
+        self.delta_steps = delta_steps
+        self._condition = condition_on_re_enabled(cfg)
+        if stats.re_min is not None and stats.re_max is not None:
+            self._re_scaling = ReScaling(stats.re_min, stats.re_max)
+        else:
+            self._re_scaling = None
+        root = cfg.dataset.output_root
+        self._series: list[tuple[float, np.ndarray]] = []
+        self._index: list[tuple[int, int]] = []
+        for sim_id in re_split_simulation_ids(cfg)[split]:
+            row = lookup_metadata_row(root, sim_id)
+            re_val = float(row["re"])
+            raw = load_simulation_tensor(cfg, sim_id, split)
+            norm = normalize_fields(raw, stats)
+            sim_idx = len(self._series)
+            self._series.append((re_val, norm))
+            n = max(0, norm.shape[0] - delta_steps)
+            for t in range(n):
+                self._index.append((sim_idx, t))
+
+    def __len__(self) -> int:
+        return len(self._index)
+
+    def __getitem__(self, index: int) -> dict[str, Any]:
+        """
+        Return one (input, target) pair with optional Re conditioning channel.
+
+        Parameters:
+            index (int): Sample index across all simulations in the split.
+
+        Returns:
+            dict[str, Any]: Keys ``input``, ``target``, ``time_index``, ``re``.
+        """
+        if index < 0 or index >= len(self):
+            raise IndexError(index)
+        sim_idx, t = self._index[index]
+        re_val, series = self._series[sim_idx]
+        inp = series[t]
+        tgt = series[t + self.delta_steps]
+        if self._condition:
+            if self._re_scaling is None:
+                raise RuntimeError("Re scaling missing from preprocess stats")
+            inp = append_re_channel(inp, self._re_scaling.scale(re_val))
+        return {
+            "input": inp.astype(np.float32),
+            "target": tgt.astype(np.float32),
+            "time_index": t,
+            "re": re_val,
+        }
+
+
 def build_flow_datasets(
     cfg: DictConfig,
     *,
     delta_steps: int = 1,
     stats: PreprocessStats | None = None,
-) -> dict[str, FlowDataset]:
+) -> dict[str, FlowDataset | FlowMultiReDataset]:
     """
-    Build train/val/test ``FlowDataset`` objects with shared normalization.
+    Build train/val/test datasets with shared normalization.
 
     Parameters:
         cfg (DictConfig): Composed config.
@@ -184,12 +272,22 @@ def build_flow_datasets(
         stats (PreprocessStats | None): Pre-fitted stats; computed on train if omitted.
 
     Returns:
-        dict[str, FlowDataset]: Keys ``train``, ``val``, ``test``.
+        dict[str, FlowDataset | FlowMultiReDataset]: Keys ``train``, ``val``, ``test``.
     """
     fitted = stats if stats is not None else fit_preprocess_stats(cfg)
-    out: dict[str, FlowDataset] = {}
+    use_re = bool(cfg.dataset.get("use_re_splits", False))
+    out: dict[str, FlowDataset | FlowMultiReDataset] = {}
     for name in ("train", "val", "test"):
-        if name in cfg.dataset.temporal_split:
+        if name not in cfg.dataset.temporal_split:
+            continue
+        if use_re:
+            out[name] = FlowMultiReDataset(
+                cfg,
+                name,
+                fitted,
+                delta_steps=delta_steps,
+            )
+        else:
             out[name] = FlowDataset(
                 cfg,
                 name,
