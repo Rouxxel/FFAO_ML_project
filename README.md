@@ -13,7 +13,55 @@ simulations as generic images.
    when storage and prior stages allow.
 
 Research questions and success criteria: [documentation/PRD.md](documentation/PRD.md).  
-Dataset stages and URLs: [documentation/DATA_SOURCES.md](documentation/DATA_SOURCES.md).
+Dataset stages and URLs: [documentation/DATA_SOURCES.md](documentation/DATA_SOURCES.md).  
+After `main.py --run`, see [documentation/EXPECTED_RESULTS.md](documentation/EXPECTED_RESULTS.md)
+for where outputs land.
+
+## Repository layout (source only)
+
+Tracked project tree **excluding** gitignored pipeline outputs (`dataset/`, `log/`,
+`results/`, `.cache/`, `outputs/`, `.local_test_runs/`, virtualenvs, caches):
+
+```text
+FFAO_ML_project/
+├── configs/                    # Hydra: dataset, model, train, eval, simulation
+│   ├── config.yaml
+│   ├── dataset/
+│   ├── eval/
+│   ├── model/
+│   ├── simulation/
+│   └── train/
+├── documentation/              # PRD, architecture, contracts, data, legal
+│   ├── setup/                  # CI and platform notes
+│   └── EXPECTED_RESULTS.md     # Pipeline artifacts (generated; not in git)
+├── experiments/                # Stage runbooks and experiment notes
+├── scripts/                    # CLI: import, train, eval, validate, clean
+├── src/
+│   ├── ffaoml/                 # Package: data, ML, training, pipeline, CFD, physics
+│   │   ├── cfd/                # Solver adapters (stub, FD, Dedalus, OpenFOAM hook)
+│   │   ├── data/               # I/O, catalog, Zenodo/LBM import, Zarr layout
+│   │   ├── evaluation/         # Baselines, metrics, rollout, plots
+│   │   ├── ml/                 # FlowDataset, preprocessing, splits
+│   │   ├── models/             # CNN, ConvLSTM, FNO
+│   │   ├── pipeline/           # stage1.py orchestration (used by main.py)
+│   │   ├── physics/            # NS helpers, Reynolds, torch ops
+│   │   ├── training/           # Train loops, losses, checkpoints
+│   │   └── validation/         # Stage 1 CFD validation figures
+│   └── utils/                  # Logging, secure_file_io
+├── tests/
+│   ├── fixtures/               # Mini HDF5 and dataset builders
+│   └── test_*.py
+├── .github/workflows/          # CI and security workflows
+├── main.py                     # Stage 1 end-to-end entry point
+├── pyproject.toml
+├── requirements.txt
+├── CITATION.cff
+├── LICENSE / LICENSE-DATA / NOTICE
+└── README.md
+```
+
+Planning notes at repo root (`CFD_DATA_TASKS.md`, `FOUNDATION_TASKS.md`,
+`ML_EVAL_TASKS.md`) may exist locally; they are optional and not required to run the pipeline.
 
 ## Status
 
@@ -44,6 +92,20 @@ Steps: **import** → **CFD validation** → **baseline eval** → **CNN train/e
 optional **ConvLSTM** + multistep compare, **FNO** (`--with-fno`). Use `--only` /
 `--from` on `main.py --run`, or run scripts under `scripts/` for one step at a time.
 
+### Reset local pipeline outputs
+
+To re-test import → train from scratch (pipeline still supports skip-if-done when
+artifacts remain):
+
+```bash
+python scripts/clean_pipeline_artifacts.py --list
+python scripts/clean_pipeline_artifacts.py --preset pipeline --dry-run
+python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
+```
+
+Selective cleanup: `--target dataset-generated`, `--target dataset-zenodo`,
+`--target runs`, `--run stage1_cnn`, `--preset models`, etc. (see script docstring).
+
 ## Stage 1 data (Zenodo Re ≈ 100)
 
 Catalog and attribution: [documentation/DATA_SOURCES.md](documentation/DATA_SOURCES.md).  
@@ -64,12 +126,28 @@ python -m pip install -r requirements.txt
 
 ### 2. Import into `dataset/`
 
+The [Zenodo record](https://zenodo.org/records/18669296) often ships **code only**
+(no HDF5). The pipeline **auto-fallback** runs an LBM generator when Zenodo/cache
+has no file:
+
 ```bash
-python scripts/download_stage1_zenodo.py
+python main.py --dry-run          # shows import strategy (zenodo vs generate)
+python main.py --run              # import → … (auto fallback → generated_data)
+python main.py --run --generate-data   # force LBM → dataset/generated_data/
+python main.py --run --only generate   # generate + import only
 ```
 
-If the HDF5 is not listed on the [Zenodo record](https://zenodo.org/records/18669296)
-yet, place `cylinder_re100_grid64_last100.h5` under `.cache/zenodo_stage1/` or pass:
+On-disk layout after import:
+
+| Source | Directory |
+|--------|-----------|
+| Zenodo / cache / `--local-file` | `dataset/zenodo_data/` |
+| LBM fallback / `--generate-data` | `dataset/generated_data/` |
+
+Each contains `simulations/re_100_zenodo/fields.zarr`, `metadata.csv`, `manifest.json`.
+Legacy flat `dataset/` is still detected if present.
+
+If you already have an HDF5 (official or third-party), pass it explicitly:
 
 ```bash
 python scripts/download_stage1_zenodo.py --local-file path/to/cylinder_re100_grid64_last100.h5
@@ -222,6 +300,7 @@ CI: [documentation/setup/CI.md](documentation/setup/CI.md) (GitHub Actions).
 | [documentation/PRD.md](documentation/PRD.md) | Requirements and research questions |
 | [documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md) | System design and repository layout |
 | [documentation/CONTRACTS.md](documentation/CONTRACTS.md) | CFD / dataset / ML tensor contracts |
+| [documentation/EXPECTED_RESULTS.md](documentation/EXPECTED_RESULTS.md) | Pipeline output paths and success checklist |
 | [documentation/DATA_SOURCES.md](documentation/DATA_SOURCES.md) | Staged datasets (Stage 1 active) |
 | [documentation/REPRODUCIBILITY.md](documentation/REPRODUCIBILITY.md) | Manifests and checkpoint bundles |
 | [documentation/TECH_STACK.md](documentation/TECH_STACK.md) | Technology choices |

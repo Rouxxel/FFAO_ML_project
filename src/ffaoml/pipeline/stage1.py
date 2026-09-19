@@ -32,13 +32,16 @@ from ffaoml.app_logging import log_handler
 
 # Project imports
 from ffaoml.config import config_dir, run_directory, seed_from_config
-from ffaoml.data.catalog import dataset_root_from_config, resolve_simulation_dir
-from ffaoml.data.io import FIELD_STORE_NAME
-from ffaoml.data.sources.zenodo_re100 import import_stage1_from_config
+from ffaoml.data.catalog import dataset_root_from_config, simulation_id_from_config
+from ffaoml.data.sources.stage1_import import (
+    Stage1ImportMode,
+    build_import_plan,
+    run_stage1_import,
+)
+from ffaoml.data.stage1_layout import import_complete, resolve_active_dataset_root
 from ffaoml.evaluation.model_report import run_model_evaluation
 from ffaoml.evaluation.multistep_compare import run_multistep_comparison
 from ffaoml.evaluation.runner import run_baseline_evaluation
-from ffaoml.manifests import dataset_manifest_path
 from ffaoml.training.train import run_cnn_training
 from ffaoml.training.train_convlstm import run_convlstm_training
 from ffaoml.validation.stage1_zenodo import run_stage1_validation
@@ -53,6 +56,7 @@ DEFAULT_RUNS_ROOT = Path("results/runs")
 class PipelinePhase(StrEnum):
     """Ordered Stage 1 pipeline steps."""
 
+    GENERATE = "generate"
     IMPORT = "import"
     CFD_VALIDATION = "cfd_validation"
     BASELINE_EVAL = "baseline_eval"
@@ -97,6 +101,9 @@ class Stage1PipelineOptions:
     hydra_overrides: list[str] = field(default_factory=list)
     force: bool = False
     dry_run: bool = False
+    import_mode: Stage1ImportMode = Stage1ImportMode.AUTO
+    generate_data: bool = False
+    lbm_fast: bool = False
 
 
 class PrerequisiteError(RuntimeError):
@@ -138,11 +145,20 @@ def compose_stage1_config(
 """MARKERS-----------------------------------------------------------"""
 
 
-def _dataset_import_done(cfg: DictConfig) -> bool:
-    root = dataset_root_from_config(cfg)
-    manifest = dataset_manifest_path(root)
-    zarr_dir = resolve_simulation_dir(cfg) / FIELD_STORE_NAME
-    return manifest.is_file() and zarr_dir.is_dir()
+def _resolve_import_mode(opts: Stage1PipelineOptions) -> Stage1ImportMode:
+    if opts.generate_data:
+        return Stage1ImportMode.GENERATED
+    return opts.import_mode
+
+
+def _dataset_import_done(opts: Stage1PipelineOptions, cfg: DictConfig) -> bool:
+    sim_id = simulation_id_from_config(cfg)
+    if opts.dataset_root is not None and import_complete(
+        opts.dataset_root, simulation_id=sim_id
+    ):
+        return True
+    active = resolve_active_dataset_root(opts.repo_root, simulation_id=sim_id)
+    return active is not None
 
 
 def _cfd_validation_done(repo_root: Path) -> bool:
@@ -158,8 +174,8 @@ def _phase_done(
     phase: PipelinePhase, opts: Stage1PipelineOptions, cfg: DictConfig
 ) -> bool:
     runs = opts.repo_root / opts.runs_root
-    if phase == PipelinePhase.IMPORT:
-        return _dataset_import_done(cfg)
+    if phase in (PipelinePhase.GENERATE, PipelinePhase.IMPORT):
+        return _dataset_import_done(opts, cfg)
     if phase == PipelinePhase.CFD_VALIDATION:
         return _cfd_validation_done(opts.repo_root)
     if phase == PipelinePhase.BASELINE_EVAL:
@@ -204,6 +220,8 @@ def _phases_to_run(
             if p not in (PipelinePhase.TRAIN_FNO, PipelinePhase.EVAL_FNO)
         ]
     if only is not None:
+        if only == PipelinePhase.GENERATE:
+            return [PipelinePhase.GENERATE]
         return [only]
     if start_from is None:
         return phases
@@ -238,8 +256,11 @@ def _check_prerequisites(
         PipelinePhase.EVAL_FNO,
     )
     for phase in phases:
-        if phase in dataset_phases and not _dataset_import_done(cfg):
-            if not _phase_runs_before(phases, PipelinePhase.IMPORT, phase):
+        if phase in dataset_phases and not _dataset_import_done(opts, cfg):
+            will_acquire = _phase_runs_before(
+                phases, PipelinePhase.IMPORT, phase
+            ) or _phase_runs_before(phases, PipelinePhase.GENERATE, phase)
+            if not will_acquire:
                 label = (
                     "dataset import (manifest + fields.zarr)"
                     if phase == PipelinePhase.CFD_VALIDATION
@@ -257,9 +278,7 @@ def _check_prerequisites(
                 if not _phase_runs_before(phases, PipelinePhase.TRAIN_CNN, phase):
                     missing.append(f"CNN run {opts.cnn_run_id}/model.pt")
             if not _run_artifact(runs / opts.convlstm_run_id, "model.pt"):
-                if not _phase_runs_before(
-                    phases, PipelinePhase.TRAIN_CONVLSTM, phase
-                ):
+                if not _phase_runs_before(phases, PipelinePhase.TRAIN_CONVLSTM, phase):
                     missing.append(f"ConvLSTM run {opts.convlstm_run_id}/model.pt")
         if phase == PipelinePhase.EVAL_FNO and not _run_artifact(
             runs / opts.fno_run_id, "model.pt"
@@ -303,12 +322,21 @@ def _run_phase(
     opts: Stage1PipelineOptions,
 ) -> Any:
     runs_root = opts.repo_root / opts.runs_root
-    if phase == PipelinePhase.IMPORT:
-        return import_stage1_from_config(
-            cfg,
-            local_upstream=opts.local_upstream,
-            repo_root=opts.repo_root,
+    if phase in (PipelinePhase.GENERATE, PipelinePhase.IMPORT):
+        mode = (
+            Stage1ImportMode.GENERATED
+            if phase == PipelinePhase.GENERATE or opts.generate_data
+            else _resolve_import_mode(opts)
         )
+        _result, dataset_root = run_stage1_import(
+            cfg,
+            opts.repo_root,
+            mode=mode,
+            local_upstream=opts.local_upstream,
+            lbm_fast=opts.lbm_fast,
+        )
+        opts.dataset_root = dataset_root
+        return _result
     if phase == PipelinePhase.CFD_VALIDATION:
         out = opts.repo_root / DEFAULT_CFD_VALIDATION_DIR
         return run_stage1_validation(cfg, output_dir=out)
@@ -381,6 +409,11 @@ def run_stage1_pipeline(
     Returns:
         dict[str, Any]: Plan, per-phase timings, and skipped steps.
     """
+    if opts.dataset_root is None:
+        active = resolve_active_dataset_root(opts.repo_root)
+        if active is not None:
+            opts.dataset_root = active
+
     cfg = compose_stage1_config(
         opts.repo_root,
         dataset_root=opts.dataset_root,
@@ -390,6 +423,15 @@ def run_stage1_pipeline(
         ],
     )
     phases = _phases_to_run(opts, only=only, start_from=start_from)
+    import_mode = _resolve_import_mode(opts)
+    if PipelinePhase.GENERATE in phases:
+        import_mode = Stage1ImportMode.GENERATED
+    import_plan = build_import_plan(
+        cfg,
+        opts.repo_root,
+        mode=import_mode,
+        local_upstream=opts.local_upstream,
+    )
     plan = {
         "phases": [p.value for p in phases],
         "dataset_root": str(dataset_root_from_config(cfg)),
@@ -397,6 +439,13 @@ def run_stage1_pipeline(
         "cnn_run_id": opts.cnn_run_id,
         "with_convlstm": opts.with_convlstm,
         "with_fno": opts.with_fno,
+        "stage1_import": {
+            "mode": import_mode.value,
+            "upstream_strategy": import_plan.upstream_strategy,
+            "target_dataset_root": str(import_plan.dataset_root),
+            "zenodo_has_attachment": import_plan.zenodo_has_attachment,
+            "cache_h5_exists": import_plan.cache_h5_exists,
+        },
     }
     already = {p.value: _phase_done(p, opts, cfg) for p in phases}
 
@@ -423,6 +472,16 @@ def run_stage1_pipeline(
         log_handler.info("=== [%s] starting ===", phase.value)
         started = time.perf_counter()
         phase_result = _run_phase(phase, cfg, opts)
+        if phase in (PipelinePhase.GENERATE, PipelinePhase.IMPORT):
+            cfg = compose_stage1_config(
+                opts.repo_root,
+                dataset_root=opts.dataset_root,
+                extra_overrides=[
+                    *opts.hydra_overrides,
+                    f"train.epochs={opts.train_epochs}",
+                ],
+            )
+            plan["dataset_root"] = str(dataset_root_from_config(cfg))
         elapsed = time.perf_counter() - started
         results["phases"][phase.value] = {
             "elapsed_seconds": round(elapsed, 1),

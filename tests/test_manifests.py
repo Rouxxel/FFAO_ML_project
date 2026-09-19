@@ -27,6 +27,7 @@ from ffaoml.manifests import (
     validate_checkpoint_bundle,
     write_checkpoint_bundle_manifest,
 )
+from ffaoml.training.bundle import copy_dataset_manifest_snapshot
 
 """CONSTANTS-----------------------------------------------------------"""
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -82,6 +83,22 @@ def test_write_checkpoint_bundle_manifest() -> None:
     assert '"seed": 7' in payload
     assert '"config_hash"' in payload
     assert '"dataset_manifest_hash"' in payload
+
+
+def test_copy_dataset_manifest_snapshot_uses_run_filename() -> None:
+    scratch = REPO_ROOT / ".local_test_runs" / "manifest_snapshot"
+    dataset_root = scratch / "dataset"
+    run_dir = scratch / "run"
+    dataset_root.mkdir(parents=True, exist_ok=True)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    src = dataset_root / "manifest.json"
+    src.write_text('{"schema_version":1,"stage":1}\n', encoding="utf-8")
+    cfg = OmegaConf.create({"dataset": {"output_root": str(dataset_root)}})
+    dest = copy_dataset_manifest_snapshot(cfg, run_dir)
+    assert dest is not None
+    assert dest.name == "dataset_manifest.json"
+    assert dest.read_text(encoding="utf-8") == src.read_text(encoding="utf-8")
+    assert not (run_dir / "manifest.json").is_file()
 
 
 def test_hash_file() -> None:

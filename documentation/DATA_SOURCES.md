@@ -56,8 +56,22 @@ evaluating **outside** the training distribution of physical conditions?
 
 Classic 2D cylinder wake at **Re = 100**. The Zenodo PO-CAE release documents
 **`cylinder_re100_grid64_last100.h5`**: ~**100** time snapshots on a **64×64**
-structured grid with velocity components (and optional vorticity channel). Suitable
-for CNN / ConvLSTM on regular grids.
+structured grid. The canonical HDF5 layout is:
+
+| Dataset | Shape / role |
+|---------|----------------|
+| `fields` | `(N_t, 3, 64, 64)` — channel 0 = **u**, 1 = **v**, 2 = vorticity (ω) |
+| `grid_x`, `grid_y` | 1D axes for the structured grid |
+
+The importer also accepts separate `u`, `v`, and optional `vorticity` datasets
+`(N_t, 64, 64)` and maps them into the same pipeline.
+
+**Zenodo gap:** record [18669296](https://zenodo.org/records/18669296) may list
+**training scripts only**, not the HDF5. **Pipeline fallback:** `python main.py --run`
+tries Zenodo/cache and imports to **`dataset/zenodo_data/`**; on failure it runs
+LBM (~1–3 min CPU) and imports to **`dataset/generated_data/`**. Force generation
+with `python main.py --run --generate-data` or `--only generate`. Cite Addiucci
+(2026) for the benchmark definition (see [ATTRIBUTION.md](./ATTRIBUTION.md)).
 
 **Import adapter:** `src/ffaoml/data/sources/zenodo_re100.py`
 
@@ -65,7 +79,8 @@ for CNN / ConvLSTM on regular grids.
 
 | Entry | Command |
 |-------|---------|
-| Script | `python scripts/download_stage1_zenodo.py` |
+| Generate HDF5 (fallback) | `python scripts/generate_stage1_cylinder_h5.py` |
+| Import to `dataset/` | `python scripts/download_stage1_zenodo.py` |
 | Pipeline | `python main.py --run --only import` |
 | Pipeline + local HDF5 | `python main.py --run --local-file path/to/cylinder_re100_grid64_last100.h5` |
 
@@ -92,8 +107,9 @@ Full BibTeX and credit lines: [ATTRIBUTION.md](./ATTRIBUTION.md#stage-1--zenodo-
 
 **Project config:** `configs/dataset/stage1_zenodo.yaml`  
 **On-disk target:** `dataset/simulations/re_100_zenodo/` (+ `metadata.csv` row,
-manifest `stage: 1`). If the HDF5 is not attached to the Zenodo file list yet,
-place it under `.cache/zenodo_stage1/` or pass `--local-file` to the import script.
+manifest `stage: 1`). Default cache:
+`.cache/zenodo_stage1/cylinder_re100_grid64_last100.h5` (from the generator or a
+manual copy).
 
 **Splits:** Use **time-based** train/val/test within the trajectory — not the
 multi-Re lists in `configs/dataset/splits.yaml` (those apply to Stage 3 / own

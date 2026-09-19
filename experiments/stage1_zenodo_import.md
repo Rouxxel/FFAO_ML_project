@@ -4,15 +4,17 @@
 
 ```bash
 pip install -e ".[core,dev]"
+# Zenodo often has code only — generate the documented HDF5 locally first:
+python scripts/generate_stage1_cylinder_h5.py
 python scripts/download_stage1_zenodo.py
 ```
 
-If Zenodo record [18669296](https://zenodo.org/records/18669296) does not yet list the
-HDF5 asset, place `cylinder_re100_grid64_last100.h5` in `.cache/zenodo_stage1/` or pass
-`--local-file /path/to/cylinder_re100_grid64_last100.h5`.
+HDF5 layout (Addiucci README): `fields` `(N_t, 3, 64, 64)` (`u`, `v`, ω),
+`grid_x`, `grid_y`. The generator writes that layout; separate `u`/`v`/`vorticity`
+keys are also accepted by the importer.
 
-Optional: set `dataset.import.upstream_data_url` in `configs/dataset/stage1_zenodo.yaml`
-to a direct HTTPS link.
+Optional: `dataset.import.upstream_data_url` in `configs/dataset/stage1_zenodo.yaml`
+if a direct HTTPS link becomes available.
 
 ## Upstream size
 

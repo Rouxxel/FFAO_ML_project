@@ -14,7 +14,6 @@ Train ``FlowConvLSTM`` with optional truncated unroll (``train.unroll_steps``).
 from __future__ import annotations
 
 import json
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -31,12 +30,10 @@ except ImportError:  # pragma: no cover
 
 # Project imports
 from ffaoml.config import write_resolved_config
-from ffaoml.data.catalog import dataset_root_from_config
 from ffaoml.data.loading import load_pooled_split_tensor
 from ffaoml.evaluation.rollout import one_step_baseline_metrics
 from ffaoml.manifests import (
-    DATASET_MANIFEST_FILENAME,
-    dataset_manifest_path,
+    RUN_DATASET_MANIFEST_SNAPSHOT_FILENAME,
     git_short_commit,
     hash_config,
     hash_file,
@@ -48,8 +45,12 @@ from ffaoml.ml.preprocessing import (
     save_preprocess_stats,
 )
 from ffaoml.models.convlstm import build_flow_convlstm
-from ffaoml.training.bundle import finalize_training_bundle
+from ffaoml.training.bundle import (
+    copy_dataset_manifest_snapshot,
+    finalize_training_bundle,
+)
 from ffaoml.training.losses import build_training_loss
+from ffaoml.training.progress import log_training_epoch, log_training_start
 from ffaoml.training.train import MODEL_FILENAME, TRAINING_SUMMARY_FILENAME
 
 """TYPES-----------------------------------------------------------"""
@@ -131,13 +132,6 @@ def evaluate_convlstm_mse(
     return total / max(count, 1)
 
 
-def _copy_dataset_manifest(cfg: DictConfig, run_dir: Path) -> None:
-    root = dataset_root_from_config(cfg)
-    src = dataset_manifest_path(root)
-    if src.is_file():
-        shutil.copy2(src, run_dir / DATASET_MANIFEST_FILENAME)
-
-
 """TRAINING-----------------------------------------------------------"""
 
 
@@ -195,6 +189,13 @@ def run_convlstm_training(
     best_path = out / MODEL_FILENAME
     epochs = int(cfg.train.epochs)
     checkpoint_every = int(cfg.train.checkpoint_every)
+    model_name = str(cfg.model.name)
+    log_training_start(
+        model_name=model_name,
+        epochs=epochs,
+        device=str(device),
+        output_dir=str(out),
+    )
 
     for epoch in range(1, epochs + 1):
         model.train()
@@ -212,7 +213,8 @@ def run_convlstm_training(
             optimizer.step()
 
         val_mse = evaluate_convlstm_mse(model, val_loader, device, loss_fn)
-        if val_mse < best_val:
+        is_best = val_mse < best_val
+        if is_best:
             best_val = val_mse
             torch.save(
                 {
@@ -222,6 +224,14 @@ def run_convlstm_training(
                 },
                 best_path,
             )
+        log_training_epoch(
+            model_name=model_name,
+            epoch=epoch,
+            epochs=epochs,
+            val_mse=val_mse,
+            best_val_mse=best_val,
+            is_best=is_best,
+        )
         if checkpoint_every > 0 and epoch % checkpoint_every == 0:
             torch.save(model.state_dict(), out / f"checkpoint_epoch_{epoch}.pt")
 
@@ -234,7 +244,9 @@ def run_convlstm_training(
     persistence_mse = one_step_baseline_metrics(val_norm, "persistence")["mse"]
     beats = best_val < persistence_mse
 
-    ds_manifest_path = out / DATASET_MANIFEST_FILENAME
+    write_resolved_config(cfg, out)
+    copy_dataset_manifest_snapshot(cfg, out)
+    ds_manifest_path = out / RUN_DATASET_MANIFEST_SNAPSHOT_FILENAME
     dataset_manifest_hash = (
         hash_file(ds_manifest_path) if ds_manifest_path.is_file() else None
     )
@@ -255,8 +267,6 @@ def run_convlstm_training(
     summary_path = out / TRAINING_SUMMARY_FILENAME
     summary_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
 
-    write_resolved_config(cfg, out)
-    _copy_dataset_manifest(cfg, out)
     finalize_training_bundle(cfg, out, repo_root=repo_root)
 
     return ConvLSTMTrainingResult(

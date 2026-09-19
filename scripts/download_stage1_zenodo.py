@@ -8,12 +8,16 @@
 ### @date 2026
 #############################################################################
 
-Fetch the Re≈100 cylinder trajectory from Zenodo (record 18669296 by default),
-convert to ``dataset/simulations/re_100_zenodo/fields.zarr``, and write
-``metadata.csv`` plus ``dataset/manifest.json``.
+Resolve upstream ``cylinder_re100_grid64_last100.h5`` (Zenodo, cache, or
+``--local-file``), convert to ``dataset/simulations/re_100_zenodo/fields.zarr``,
+and write ``metadata.csv`` plus ``dataset/manifest.json``.
+
+If Zenodo has no HDF5 attachment, run ``scripts/generate_stage1_cylinder_h5.py``
+first (writes ``.cache/zenodo_stage1/``).
 
 Example::
 
+    python scripts/generate_stage1_cylinder_h5.py
     python scripts/download_stage1_zenodo.py
     python scripts/download_stage1_zenodo.py --local-file path/to/data.h5
 """
@@ -28,7 +32,7 @@ from hydra import compose, initialize_config_dir
 # Project imports
 from ffaoml.app_logging import log_handler
 from ffaoml.config import config_dir
-from ffaoml.data.sources.zenodo_re100 import import_stage1_from_config
+from ffaoml.data.sources.stage1_import import Stage1ImportMode, run_stage1_import
 
 """CONSTANTS-----------------------------------------------------------"""
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -55,6 +59,16 @@ def main() -> None:
         default="config",
         help="Hydra root config name (default: config).",
     )
+    parser.add_argument(
+        "--generate-data",
+        action="store_true",
+        help="Force LBM fallback (dataset/generated_data/).",
+    )
+    parser.add_argument(
+        "--lbm-fast",
+        action="store_true",
+        help="Short LBM when generating (smoke only).",
+    )
     args = parser.parse_args()
 
     with initialize_config_dir(
@@ -63,11 +77,15 @@ def main() -> None:
     ):
         cfg = compose(config_name=args.config_name)
 
-    result = import_stage1_from_config(
+    mode = Stage1ImportMode.GENERATED if args.generate_data else Stage1ImportMode.AUTO
+    result, dataset_root = run_stage1_import(
         cfg,
+        REPO_ROOT,
+        mode=mode,
         local_upstream=args.local_file,
-        repo_root=REPO_ROOT,
+        lbm_fast=args.lbm_fast,
     )
+    log_handler.info("Dataset root: %s", dataset_root)
     log_handler.info(
         "Imported %s steps on %sx%s grid.",
         result.n_steps,

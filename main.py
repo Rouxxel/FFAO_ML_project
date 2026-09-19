@@ -15,12 +15,28 @@ pip install -e ".[core,dev,ml]"
 
 ``python main.py`` alone does **not** run anything — you must pass ``--run`` or ``--dry-run``.
 
-Examples::
+Quick reference::
 
+    # Plan (no download, training, or eval)
     python main.py --dry-run
+
+    # Full pipeline (import: Zenodo/cache/local → else LBM → dataset/generated_data/)
+    python main.py --run
+    python main.py --run --generate-data
     python main.py --run --local-file path/to/cylinder_re100_grid64_last100.h5
-    python main.py --run --with-convlstm --epochs 80 --force
-    python main.py --run --only train_cnn
+    python main.py --run --force
+
+    # Optional ConvLSTM / FNO
+    python main.py --run --with-convlstm --with-fno --epochs 80 --fno-epochs 50
+
+    # Single phase (--run required)
+    python main.py --run --only import
+    python main.py --run --only generate
+    python main.py --run --only train_cnn --epochs 50
+    python main.py --run --from train_cnn
+
+    # Clean slate before re-run
+    python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
 """
 
 # Native imports
@@ -52,15 +68,19 @@ WARNING: `python main.py` does not run the pipeline.
   --dry-run   Show which steps would run (no download, training, or evaluation).
   --run       Actually execute the pipeline (required for real work).
 
-Common commands (full pipeline)
+Quick reference (full pipeline)
 --------------------------------------------------------------------------------
   python main.py --dry-run
+  python main.py --run
+  python main.py --run --generate-data
   python main.py --run --local-file path/to/cylinder_re100_grid64_last100.h5
   python main.py --run --force
-  python main.py --run --with-convlstm --with-fno --epochs 100
+  python main.py --run --with-convlstm --with-fno --epochs 80 --fno-epochs 50
 
-Single step via main.py (still use --run)
+Single phase (--run required)
 --------------------------------------------------------------------------------
+  python main.py --run --only generate
+  python main.py --run --only import
   python main.py --run --only import --local-file path/to/data.h5
   python main.py --run --only cfd_validation
   python main.py --run --only baseline_eval
@@ -70,11 +90,16 @@ Single step via main.py (still use --run)
   python main.py --run --only compare_multistep --with-convlstm
   python main.py --run --from train_cnn
 
-Phases: import, cfd_validation, baseline_eval, train_cnn, eval_cnn,
+Phases: generate, import, cfd_validation, baseline_eval, train_cnn, eval_cnn,
         train_convlstm, compare_multistep, train_fno, eval_fno
+
+Import (auto): Zenodo/cache/local HDF5 → dataset/zenodo_data/; on failure LBM
+→ dataset/generated_data/. --generate-data forces LBM on import; --only generate
+runs LBM file generation only (no import).
 
 Individual scripts (same steps, run manually)
 --------------------------------------------------------------------------------
+  python scripts/generate_stage1_cylinder_h5.py   # if Zenodo has no HDF5
   python scripts/download_stage1_zenodo.py [--local-file ...]
   python scripts/validate_stage1_zenodo.py
   python scripts/evaluate.py [--run-id ...]
@@ -83,6 +108,13 @@ Individual scripts (same steps, run manually)
   python scripts/train_convlstm.py [--run-id ...]
   python scripts/compare_multistep.py --cnn-run ... --convlstm-run ...
   python scripts/evaluate_re_generalization.py --run-dir ...  (multi-Re)
+
+Reset local outputs (see scripts/clean_pipeline_artifacts.py docstring)
+--------------------------------------------------------------------------------
+  python scripts/clean_pipeline_artifacts.py --list
+  python scripts/clean_pipeline_artifacts.py --preset pipeline --dry-run
+  python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
+  python scripts/clean_pipeline_artifacts.py --target dataset-generated --yes
 
 Install first: pip install -e ".[core,dev,ml]"
 ================================================================================
@@ -101,7 +133,7 @@ def build_parser() -> argparse.ArgumentParser:
     Returns:
         argparse.ArgumentParser: Configured parser.
     """
-    phase_choices = [p.value for p in PHASE_ORDER]
+    phase_choices = [p.value for p in PipelinePhase]
     parser = argparse.ArgumentParser(
         description="FFAO ML Stage 1: data import through training and evaluation.",
     )
@@ -124,7 +156,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--local-file",
         type=Path,
         default=None,
-        help="Upstream HDF5 for Zenodo import (see scripts/download_stage1_zenodo.py).",
+        help="Existing HDF5 → import under dataset/zenodo_data/.",
+    )
+    parser.add_argument(
+        "--generate-data",
+        action="store_true",
+        help="Force LBM generation → dataset/generated_data/ (skip Zenodo).",
+    )
+    parser.add_argument(
+        "--lbm-fast",
+        action="store_true",
+        help="Short LBM run when generating (smoke tests only).",
     )
     parser.add_argument(
         "--dataset-root",
@@ -234,6 +276,8 @@ def main(argv: list[str] | None = None) -> int:
         hydra_overrides=list(args.hydra_overrides),
         force=args.force,
         dry_run=args.dry_run,
+        generate_data=args.generate_data,
+        lbm_fast=args.lbm_fast,
     )
     only = PipelinePhase(args.only) if args.only else None
     start_from = PipelinePhase(args.start_from) if args.start_from else None

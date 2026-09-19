@@ -30,6 +30,11 @@ DATASET_MANIFEST_SCHEMA_VERSION = 1
 CHECKPOINT_BUNDLE_SCHEMA_VERSION = 1
 
 DATASET_MANIFEST_FILENAME = "manifest.json"
+"""On-disk dataset provenance at ``<dataset_root>/manifest.json``."""
+
+RUN_DATASET_MANIFEST_SNAPSHOT_FILENAME = "dataset_manifest.json"
+"""Copy of the dataset manifest stored under ``results/runs/<run_id>/``."""
+
 CHECKPOINT_BUNDLE_MANIFEST_FILENAME = "bundle_manifest.json"
 
 # Required files under results/runs/<run_id>/ (ARCHITECTURE §7.3)
@@ -37,7 +42,7 @@ CHECKPOINT_BUNDLE_FILES: tuple[str, ...] = (
     "model.pt",
     "config.yaml",
     "preprocess_stats.json",
-    "dataset_manifest.json",
+    RUN_DATASET_MANIFEST_SNAPSHOT_FILENAME,
 )
 
 """TYPES-----------------------------------------------------------"""
@@ -262,7 +267,7 @@ def write_checkpoint_bundle_manifest(
         Path: Written ``bundle_manifest.json``.
     """
     root = Path(run_dir)
-    ds_path = root / "dataset_manifest.json"
+    ds_path = root / RUN_DATASET_MANIFEST_SNAPSHOT_FILENAME
     ds_hash = hash_file(ds_path) if ds_path.is_file() else None
     seed_val: int | None = None
     if "seed" in cfg:

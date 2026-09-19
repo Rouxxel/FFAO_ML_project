@@ -7,8 +7,8 @@
 ### @date 2026
 #############################################################################
 
-Download upstream flow data from Zenodo record **18669296** (DOI 10.5281/zenodo.18669296;
-CC BY 4.0, Copyright 2026 Luca Addiucci) or a local cache,
+Download upstream flow data from Zenodo record **18669296**
+(DOI 10.5281/zenodo.18669296; CC BY 4.0, Copyright 2026 Luca Addiucci) or cache,
 parse HDF5 / NumPy / MATLAB archives, and export ``dataset/simulations/re_100_zenodo/``
 plus ``metadata.csv`` and ``manifest.json``.
 
@@ -265,8 +265,9 @@ def resolve_upstream_file(
 
     raise FileNotFoundError(
         f"Zenodo record {record_id} has no data file matching {preferred_name!r}. "
-        f"Place the file at {cached} or set dataset.import.upstream_data_url in "
-        "configs/dataset/stage1_zenodo.yaml."
+        f"Generate a compatible HDF5: python scripts/generate_stage1_cylinder_h5.py "
+        f"(writes {cached}), place the file there, pass --local-file, or set "
+        "dataset.import.upstream_data_url in configs/dataset/stage1_zenodo.yaml."
     )
 
 
@@ -379,15 +380,68 @@ def _parse_hdf5(path: Path, *, dt: float) -> ParsedTrajectory:
     import h5py
 
     with h5py.File(path, "r") as handle:
-        if "fields" not in handle:
-            raise ValueError(f"{path.name}: expected dataset 'fields'")
-        fields = np.asarray(handle["fields"][:], dtype=np.float32)
-        if fields.ndim != 4:
-            raise ValueError(
-                f"'fields' must be 4D (time, channel, y, x); got {fields.shape}"
+        if "fields" in handle:
+            fields = np.asarray(handle["fields"][:], dtype=np.float32)
+            if fields.ndim != 4:
+                raise ValueError(
+                    f"'fields' must be 4D (time, channel, y, x); got {fields.shape}"
+                )
+            gx = np.asarray(handle["grid_x"][:], dtype=np.float64).squeeze()
+            gy = np.asarray(handle["grid_y"][:], dtype=np.float64).squeeze()
+            layout = "hdf5_fields"
+        elif "u" in handle and "v" in handle:
+            velocity_x = np.asarray(handle["u"][:], dtype=np.float32)
+            velocity_y = np.asarray(handle["v"][:], dtype=np.float32)
+            if velocity_x.ndim != 3 or velocity_y.shape != velocity_x.shape:
+                raise ValueError(
+                    f"'u' and 'v' must be 3D (time, y, x); got {velocity_x.shape}"
+                )
+            n_time, ny, nx = velocity_x.shape
+            if "vorticity" in handle:
+                vorticity = np.asarray(handle["vorticity"][:], dtype=np.float32)
+            elif "omega" in handle:
+                vorticity = np.asarray(handle["omega"][:], dtype=np.float32)
+            else:
+                vorticity = None
+            if "grid_x" in handle:
+                gx = np.asarray(handle["grid_x"][:], dtype=np.float64).squeeze()
+            else:
+                gx = np.arange(nx, dtype=np.float64)
+            if "grid_y" in handle:
+                gy = np.asarray(handle["grid_y"][:], dtype=np.float64).squeeze()
+            else:
+                gy = np.arange(ny, dtype=np.float64)
+            if vorticity is None:
+                dx = float(np.median(np.diff(gx))) if gx.size > 1 else 1.0
+                dy = float(np.median(np.diff(gy))) if gy.size > 1 else 1.0
+                vorticity = _time_series_vorticity(velocity_x, velocity_y, dx, dy)
+                vorticity_source = "computed_from_uv"
+            else:
+                vorticity_source = "upstream_vorticity"
+            pressure = np.zeros_like(velocity_x, dtype=np.float32)
+            time = np.arange(n_time, dtype=np.float64) * float(dt)
+            attrs = {
+                "upstream_format": "hdf5_uv",
+                "upstream_file": path.name,
+                "pressure_source": "absent",
+                "vorticity_source": vorticity_source,
+                "n_channels_upstream": 3,
+            }
+            return ParsedTrajectory(
+                velocity_x=velocity_x,
+                velocity_y=velocity_y,
+                pressure=pressure,
+                vorticity=vorticity.astype(np.float32),
+                x=gx.astype(np.float64),
+                y=gy.astype(np.float64),
+                time=time,
+                attrs=attrs,
             )
-        gx = np.asarray(handle["grid_x"][:], dtype=np.float64).squeeze()
-        gy = np.asarray(handle["grid_y"][:], dtype=np.float64).squeeze()
+        else:
+            raise ValueError(
+                f"{path.name}: expected HDF5 datasets 'fields' (+ grid_x/grid_y) "
+                "or separate 'u', 'v' (and optional 'vorticity')."
+            )
 
     n_time, n_channels, ny, nx = fields.shape
     velocity_x = fields[:, 0, :, :]
@@ -404,7 +458,7 @@ def _parse_hdf5(path: Path, *, dt: float) -> ParsedTrajectory:
     pressure = np.zeros_like(velocity_x, dtype=np.float32)
     time = np.arange(n_time, dtype=np.float64) * float(dt)
     attrs = {
-        "upstream_format": "hdf5",
+        "upstream_format": layout,
         "upstream_file": path.name,
         "pressure_source": "absent",
         "vorticity_source": vorticity_source,
@@ -537,6 +591,7 @@ def import_stage1_from_config(
     *,
     local_upstream: str | Path | None = None,
     repo_root: str | Path | None = None,
+    provenance_note: str | None = None,
 ) -> ImportResult:
     """
     Run the full Stage 1 import using Hydra ``dataset`` settings.
@@ -667,17 +722,20 @@ def import_stage1_from_config(
 
     doi = dataset.get("source_doi")
     doi_note = f" Upstream DOI: {doi}." if doi else ""
+    note_parts = [
+        f"Imported from {upstream_path.name}; "
+        f"~{upstream_path.stat().st_size} bytes upstream.{doi_note}",
+    ]
+    if provenance_note:
+        note_parts.append(provenance_note)
+    note_parts.append("Temporal ML splits come from dataset.temporal_split in config.")
     manifest = build_dataset_manifest(
         stage=int(dataset.stage),
         source_id=str(dataset.source_id),
         source_url=source_url,
         config_hash=hash_config(cfg),
         repo_root=repo_root,
-        notes=(
-            f"Imported from {upstream_path.name}; "
-            f"~{upstream_path.stat().st_size} bytes upstream.{doi_note} "
-            "Temporal ML splits come from dataset.temporal_split in config."
-        ),
+        notes=" ".join(note_parts),
     )
     manifest_path = dataset_manifest_path(dataset_root)
     manifest.write_json(manifest_path)

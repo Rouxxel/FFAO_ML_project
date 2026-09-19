@@ -11,6 +11,7 @@ defaults:
 seed: 42
 
 paths:
+  # Active ML root; imports land in dataset/zenodo_data or dataset/generated_data
   dataset_root: dataset
   runs_root: results/runs
 

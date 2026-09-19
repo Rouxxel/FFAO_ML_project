@@ -65,6 +65,24 @@ def test_parse_hdf5_shapes(synthetic_h5: Path) -> None:
     assert parsed.time[1] == pytest.approx(0.5)
 
 
+def test_parse_hdf5_uv_separate_datasets() -> None:
+    """Alternate HDF5 with u/v/vorticity keys (e.g. external LBM scripts)."""
+    path = WORK_ROOT / "uv_layout.h5"
+    WORK_ROOT.mkdir(parents=True, exist_ok=True)
+    n_time, ny, nx = 5, 6, 7
+    rng = np.random.default_rng(1)
+    u = rng.standard_normal((n_time, ny, nx), dtype=np.float32)
+    v = rng.standard_normal((n_time, ny, nx), dtype=np.float32)
+    w = rng.standard_normal((n_time, ny, nx), dtype=np.float32)
+    with h5py.File(path, "w") as handle:
+        handle.create_dataset("u", data=u)
+        handle.create_dataset("v", data=v)
+        handle.create_dataset("vorticity", data=w)
+    parsed = parse_upstream_file(path, dt=1.0)
+    assert parsed.velocity_x.shape == (5, 6, 7)
+    assert parsed.attrs.get("upstream_format") == "hdf5_uv"
+
+
 def test_import_stage1_writes_zarr_and_manifest(synthetic_h5: Path) -> None:
     dataset_root = WORK_ROOT / "dataset_out"
     if dataset_root.is_dir():
