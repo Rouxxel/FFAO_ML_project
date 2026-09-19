@@ -24,6 +24,16 @@ test_re:
   - 300
   - 400
 
+# Shared time window per simulation (all Re in metadata must cover these indices).
+temporal_split:
+  strategy: by_time_index
+  train: [0, 80]
+  val: [0, 90]
+  test: [0, 100]
+
+prediction:
+  delta_steps: 1
+
 normalization:
   fit_split: train
   per_channel: true
