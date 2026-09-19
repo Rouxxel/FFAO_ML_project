@@ -32,7 +32,7 @@ except ImportError:  # pragma: no cover
 # Project imports
 from ffaoml.config import write_resolved_config
 from ffaoml.data.catalog import dataset_root_from_config
-from ffaoml.data.loading import load_split_tensor
+from ffaoml.data.loading import load_pooled_split_tensor
 from ffaoml.evaluation.rollout import one_step_baseline_metrics
 from ffaoml.manifests import (
     DATASET_MANIFEST_FILENAME,
@@ -229,7 +229,7 @@ def run_convlstm_training(
         checkpoint = torch.load(best_path, map_location=device, weights_only=False)
         model.load_state_dict(checkpoint["model_state_dict"])
 
-    val_raw = load_split_tensor(cfg, "val")
+    val_raw = load_pooled_split_tensor(cfg, "val")
     val_norm = normalize_fields(val_raw, stats)
     persistence_mse = one_step_baseline_metrics(val_norm, "persistence")["mse"]
     beats = best_val < persistence_mse
