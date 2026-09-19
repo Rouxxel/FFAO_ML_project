@@ -40,6 +40,7 @@ from ffaoml.manifests import (
     dataset_manifest_path,
     git_short_commit,
     hash_config,
+    hash_file,
 )
 from ffaoml.ml.dataset import build_flow_datasets
 from ffaoml.ml.preprocessing import (
@@ -48,6 +49,7 @@ from ffaoml.ml.preprocessing import (
     save_preprocess_stats,
 )
 from ffaoml.models.cnn import build_flow_cnn
+from ffaoml.training.bundle import finalize_training_bundle
 from ffaoml.training.losses import build_loss_fn
 
 """CONSTANTS-----------------------------------------------------------"""
@@ -202,14 +204,20 @@ def run_cnn_training(
     persistence_mse = one_step_baseline_metrics(val_norm, "persistence")["mse"]
     beats = best_val < persistence_mse
 
+    ds_manifest_path = out / DATASET_MANIFEST_FILENAME
+    dataset_manifest_hash = (
+        hash_file(ds_manifest_path) if ds_manifest_path.is_file() else None
+    )
     summary = {
         "schema_version": 1,
         "model": str(cfg.model.name),
         "epochs": epochs,
+        "seed": int(cfg.seed),
         "best_val_mse": best_val,
         "persistence_val_mse": persistence_mse,
         "beats_persistence": beats,
         "config_hash": hash_config(cfg),
+        "dataset_manifest_hash": dataset_manifest_hash,
         "git_commit": git_short_commit(repo_root),
     }
     summary_path = out / TRAINING_SUMMARY_FILENAME
@@ -217,6 +225,7 @@ def run_cnn_training(
 
     write_resolved_config(cfg, out)
     _copy_dataset_manifest(cfg, out)
+    finalize_training_bundle(cfg, out, repo_root=repo_root)
 
     return TrainingResult(
         output_dir=out,

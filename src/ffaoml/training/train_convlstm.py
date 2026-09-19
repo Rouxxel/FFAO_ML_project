@@ -47,6 +47,8 @@ from ffaoml.ml.preprocessing import (
     save_preprocess_stats,
 )
 from ffaoml.models.convlstm import build_flow_convlstm
+from ffaoml.manifests import hash_file
+from ffaoml.training.bundle import finalize_training_bundle
 from ffaoml.training.losses import build_loss_fn
 from ffaoml.training.train import MODEL_FILENAME, TRAINING_SUMMARY_FILENAME
 
@@ -232,16 +234,22 @@ def run_convlstm_training(
     persistence_mse = one_step_baseline_metrics(val_norm, "persistence")["mse"]
     beats = best_val < persistence_mse
 
+    ds_manifest_path = out / DATASET_MANIFEST_FILENAME
+    dataset_manifest_hash = (
+        hash_file(ds_manifest_path) if ds_manifest_path.is_file() else None
+    )
     summary = {
         "schema_version": 1,
         "model": str(cfg.model.name),
         "epochs": epochs,
+        "seed": int(cfg.seed),
         "unroll_steps": unroll_steps,
         "teacher_forcing": teacher_forcing,
         "best_val_mse": best_val,
         "persistence_val_mse": persistence_mse,
         "beats_persistence": beats,
         "config_hash": hash_config(cfg),
+        "dataset_manifest_hash": dataset_manifest_hash,
         "git_commit": git_short_commit(repo_root),
     }
     summary_path = out / TRAINING_SUMMARY_FILENAME
@@ -249,6 +257,7 @@ def run_convlstm_training(
 
     write_resolved_config(cfg, out)
     _copy_dataset_manifest(cfg, out)
+    finalize_training_bundle(cfg, out, repo_root=repo_root)
 
     return ConvLSTMTrainingResult(
         output_dir=out,

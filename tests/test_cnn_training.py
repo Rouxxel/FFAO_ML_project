@@ -88,6 +88,9 @@ def test_cnn_training_writes_checkpoint_bundle(train_cfg) -> None:
     assert result.model_path.is_file()
     assert (out / "config.yaml").is_file()
     assert (out / "preprocess_stats.json").is_file()
+    assert (out / "bundle_manifest.json").is_file()
     summary = json.loads(result.summary_path.read_text(encoding="utf-8"))
+    assert summary.get("seed") == train_cfg.seed
+    assert summary.get("config_hash")
     assert summary["beats_persistence"] is True
     assert result.beats_persistence
