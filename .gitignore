@@ -208,6 +208,7 @@ __marimo__/
 
 # Local data and run outputs (repo root only — not configs/dataset/)
 /dataset/
+/log/
 results/
 experiments/runs/
 .local_test_runs/

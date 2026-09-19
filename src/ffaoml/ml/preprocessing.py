@@ -26,7 +26,8 @@ from omegaconf import DictConfig
 # Project imports
 from ffaoml.contracts import DEFAULT_FIELD_CHANNELS
 from ffaoml.data.catalog import temporal_index_range
-from ffaoml.data.loading import load_split_tensor
+from ffaoml.data.loading import load_simulation_tensor, load_split_tensor
+from ffaoml.ml.splits import re_split_simulation_ids
 
 """CONSTANTS-----------------------------------------------------------"""
 STATS_FILENAME = "preprocess_stats.json"
@@ -45,6 +46,8 @@ class PreprocessStats:
     time_start: int
     time_end: int
     schema_version: int = 1
+    re_min: float | None = None
+    re_max: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize for ``preprocess_stats.json``."""
@@ -61,6 +64,8 @@ class PreprocessStats:
         Returns:
             PreprocessStats: Validated instance.
         """
+        re_min = data.get("re_min")
+        re_max = data.get("re_max")
         return cls(
             channels=tuple(data["channels"]),
             mean=tuple(float(x) for x in data["mean"]),
@@ -69,6 +74,8 @@ class PreprocessStats:
             time_start=int(data["time_start"]),
             time_end=int(data["time_end"]),
             schema_version=int(data.get("schema_version", 1)),
+            re_min=float(re_min) if re_min is not None else None,
+            re_max=float(re_max) if re_max is not None else None,
         )
 
 
@@ -86,13 +93,20 @@ def fit_preprocess_stats(cfg: DictConfig) -> PreprocessStats:
         PreprocessStats: Statistics for ``normalize_fields``.
     """
     fit_split = str(cfg.dataset.normalization.fit_split)
-    if bool(cfg.dataset.get("use_re_splits", False)):
-        raise NotImplementedError(
-            "Re-level normalization for use_re_splits requires multi-simulation "
-            "metadata; use Stage 1 temporal splits for now."
-        )
     start, end = temporal_index_range(cfg, fit_split)
-    tensor = load_split_tensor(cfg, fit_split)
+    if bool(cfg.dataset.get("use_re_splits", False)):
+        from ffaoml.ml.conditioning import fit_re_scaling
+
+        sim_ids = re_split_simulation_ids(cfg)[fit_split]
+        if not sim_ids:
+            raise ValueError(f"no train simulations for fit_split={fit_split}")
+        chunks = [load_simulation_tensor(cfg, sim_id, fit_split) for sim_id in sim_ids]
+        tensor = np.concatenate(chunks, axis=0)
+        re_bounds = fit_re_scaling(cfg)
+        re_min, re_max = re_bounds.re_min, re_bounds.re_max
+    else:
+        tensor = load_split_tensor(cfg, fit_split)
+        re_min, re_max = None, None
     mean = tensor.mean(axis=(0, 2, 3))
     std = tensor.std(axis=(0, 2, 3)) + 1e-8
     return PreprocessStats(
@@ -102,6 +116,8 @@ def fit_preprocess_stats(cfg: DictConfig) -> PreprocessStats:
         fit_split=fit_split,
         time_start=start,
         time_end=end,
+        re_min=re_min,
+        re_max=re_max,
     )
 
 

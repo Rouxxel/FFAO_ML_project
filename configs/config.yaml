@@ -5,6 +5,7 @@ defaults:
   - dataset: stage1_zenodo
   - model: cnn
   - train: default
+  - eval: default
   - _self_
 
 seed: 42

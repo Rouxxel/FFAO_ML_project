@@ -17,6 +17,8 @@ from pathlib import Path
 import h5py
 import numpy as np
 
+from ffaoml.app_logging import log_handler
+
 """CONSTANTS-----------------------------------------------------------"""
 OUTPUT = Path(__file__).resolve().parent / "stage1_mini.h5"
 
@@ -35,7 +37,7 @@ def main() -> None:
         handle.create_dataset("fields", data=fields, compression="gzip")
         handle.create_dataset("grid_x", data=x)
         handle.create_dataset("grid_y", data=y)
-    print(f"Wrote {OUTPUT} ({OUTPUT.stat().st_size} bytes)")
+    log_handler.info("Wrote %s (%s bytes)", OUTPUT, OUTPUT.stat().st_size)
 
 
 if __name__ == "__main__":

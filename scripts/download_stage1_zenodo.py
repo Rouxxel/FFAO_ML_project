@@ -26,6 +26,7 @@ from pathlib import Path
 from hydra import compose, initialize_config_dir
 
 # Project imports
+from ffaoml.app_logging import log_handler
 from ffaoml.config import config_dir
 from ffaoml.data.sources.zenodo_re100 import import_stage1_from_config
 
@@ -67,10 +68,15 @@ def main() -> None:
         local_upstream=args.local_file,
         repo_root=REPO_ROOT,
     )
-    print(f"Imported {result.n_steps} steps on {result.ny}x{result.nx} grid.")
-    print(f"Zarr store: {result.store_path}")
-    print(f"Manifest:   {result.manifest_path}")
-    print(f"Upstream:   {result.upstream_path}")
+    log_handler.info(
+        "Imported %s steps on %sx%s grid.",
+        result.n_steps,
+        result.ny,
+        result.nx,
+    )
+    log_handler.info("Zarr store: %s", result.store_path)
+    log_handler.info("Manifest: %s", result.manifest_path)
+    log_handler.info("Upstream: %s", result.upstream_path)
 
 
 if __name__ == "__main__":

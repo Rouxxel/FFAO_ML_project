@@ -20,6 +20,7 @@ from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
 
 # Project imports
+from ffaoml.app_logging import log_handler
 from ffaoml.config import config_dir
 
 """CONSTANTS-----------------------------------------------------------"""
@@ -40,7 +41,7 @@ def main() -> None:
         version_base="1.3",
     ):
         cfg = compose(config_name="config")
-    print(OmegaConf.to_yaml(cfg))
+    log_handler.info("%s", OmegaConf.to_yaml(cfg))
 
 
 if __name__ == "__main__":

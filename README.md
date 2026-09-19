@@ -22,7 +22,27 @@ Dataset stages and URLs: [documentation/DATA_SOURCES.md](documentation/DATA_SOUR
 | Package `ffaoml`, physics, Hydra configs, manifests, CI | Ready |
 | Stage 1 import, Zarr layout, validation figures | Ready (scripts below) |
 | ML `FlowDataset` / normalization (Stage 1 temporal splits) | Ready |
-| Full CNN training | Not started |
+| CNN / ConvLSTM training, baselines, rollout eval | Ready (`ml-stage1-v0.1`) |
+
+## One-command pipeline (`main.py`)
+
+From the repo root (after `pip install -r requirements.txt` or `pip install -e ".[core,dev,ml]"`):
+
+```bash
+python main.py --dry-run          # preview only — does not train or download
+python main.py --run --local-file path/to/cylinder_re100_grid64_last100.h5
+python main.py --run --with-convlstm --epochs 80 --force
+```
+
+Runtime logs: **`log/ffao_ml_YYYY-MM-DD.log`** (also echoed to the console). Import via
+``from ffaoml.app_logging import log_handler``.
+
+Bare `python main.py` logs a usage guide and exits (no work is done). Use **`--run`**
+to execute; **`--dry-run`** to list steps without running them.
+
+Steps: **import** → **CFD validation** → **baseline eval** → **CNN train/eval**;
+optional **ConvLSTM** + multistep compare, **FNO** (`--with-fno`). Use `--only` /
+`--from` on `main.py --run`, or run scripts under `scripts/` for one step at a time.
 
 ## Stage 1 data (Zenodo Re ≈ 100)
 
@@ -36,9 +56,10 @@ python -m venv .venv
 # Windows: .venv\Scripts\activate
 # Linux/macOS: source .venv/bin/activate
 python -m pip install -U pip
-python -m pip install -e ".[core,dev]"
-# Optional for DataLoader smoke tests and training:
-python -m pip install -e ".[ml]"
+# Full stack (core + dev + ML): see also requirements.txt
+python -m pip install -r requirements.txt
+# Or minimal CI-style install without PyTorch:
+# python -m pip install -e ".[core,dev]"
 ```
 
 ### 2. Import into `dataset/`
@@ -86,6 +107,88 @@ sample = datasets["train"][0]  # input/target tensors (C, H, W)
 
 Switch to multi-Re simulation splits (Stage 3): `dataset=splits` in Hydra overrides.
 
+### 5. Baseline evaluation (ML Phase 1)
+
+```bash
+python scripts/evaluate.py
+python scripts/evaluate.py --run-id baseline_val --split val
+```
+
+Writes `results/runs/<run_id>/metrics.json` with persistence and linear rollout
+curves (`configs/eval/default.yaml`).
+
+### 6. Train one-step CNN (ML Phase 2)
+
+Requires the `[ml]` extra (`torch`):
+
+```bash
+pip install -e ".[core,dev,ml]"
+python scripts/train.py --run-id cnn_stage1 --epochs 50
+```
+
+Writes `model.pt`, `config.yaml`, `preprocess_stats.json`, `dataset_manifest.json`
+(when present), and `training_summary.json` (includes comparison vs persistence).
+
+### 7. Model evaluation figures (ML Phase 3)
+
+```bash
+python scripts/evaluate_model.py --run-dir results/runs/cnn_stage1
+```
+
+Writes `<run-dir>/figures/` (`vorticity_pred_vs_true.png`, `error_vs_horizon.png`,
+`rollout_stability.png`) and `model_eval_metrics.json`. Re-wise heatmaps are deferred
+to Stage 3.
+
+### 8. ConvLSTM and multi-step compare (ML Phase 4)
+
+```bash
+python scripts/train_convlstm.py --run-id convlstm_stage1 --epochs 50
+# Optional truncated unroll during training:
+python scripts/train_convlstm.py --run-id convlstm_unroll4 --unroll-steps 4
+
+python scripts/compare_multistep.py \
+  --cnn-run results/runs/cnn_stage1 \
+  --convlstm-run results/runs/convlstm_stage1
+```
+
+Writes `multistep_compare.json` and `figures/cnn_vs_convlstm_horizon.png` with MSE
+at horizons `{1, 10, 25, 50}` (`configs/eval/default.yaml`). See
+[experiments/stage1_multistep_drift.md](experiments/stage1_multistep_drift.md).
+
+### 9. Reproducibility (ML Phase 5)
+
+Training runs persist `config.yaml`, `seed` (top-level Hydra + `training_summary.json`),
+`dataset_manifest.json`, and `bundle_manifest.json` (config and dataset hashes).
+Check a run:
+
+```bash
+python scripts/validate_run_bundle.py --run-dir results/runs/cnn_stage1
+```
+
+End-to-end Stage 1 ML notes: [experiments/stage1_ml_temporal_re100.md](experiments/stage1_ml_temporal_re100.md).
+
+### 10. Multi-Re conditioning (ML Phase 6)
+
+Requires multiple simulations in `dataset/metadata.csv` (own CFD or stub data).
+Use `dataset=splits` and `model=cnn_re`:
+
+```bash
+python scripts/train.py --run-id cnn_multire dataset=splits model=cnn_re --epochs 50
+python scripts/evaluate_re_generalization.py --run-dir results/runs/cnn_multire
+```
+
+See [experiments/stage3_re_generalization.md](experiments/stage3_re_generalization.md).
+
+### 11. FNO and reconstruction (ML Phase 7)
+
+```bash
+python scripts/train.py --run-id fno_stage1 --model fno --epochs 50
+# Physics-informed loss: train.loss.divergence_weight=0.01 in Hydra overrides
+python scripts/train.py --run-id reconstruct_stage1 --model reconstruct --epochs 50
+```
+
+Details: [experiments/fno_stretch.md](experiments/fno_stretch.md).
+
 ## Python package
 
 Import name: **`ffaoml`**, [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) under `src/ffaoml/`. Layout and components:
@@ -105,7 +208,8 @@ CI: [documentation/setup/CI.md](documentation/setup/CI.md) (GitHub Actions).
 ### Release tags (optional)
 
 - `foundation-v0.1` — package, configs, CI baseline  
-- `data-stage1-v0.1` — Stage 1 import + validation + ML Phase 0 loaders (after local import/validation)
+- `data-stage1-v0.1` — Stage 1 import + validation (after local import/validation)  
+- `ml-stage1-v0.1` — Stage 1 ML Phases 0–4 (baselines, CNN, ConvLSTM, compare); tag after `pytest` with `[ml]`
 
 ## Documentation
 

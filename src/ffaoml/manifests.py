@@ -116,6 +116,7 @@ class CheckpointBundleManifest:
     schema_version: int
     created_at: str
     git_commit: str | None = None
+    seed: int | None = None
     dataset_manifest_hash: str | None = None
     config_hash: str | None = None
     files: dict[str, str] = field(
@@ -241,6 +242,40 @@ def hash_file(path: str | Path) -> str:
 def dataset_manifest_path(dataset_root: str | Path) -> Path:
     """Return ``<dataset_root>/manifest.json``."""
     return Path(dataset_root) / DATASET_MANIFEST_FILENAME
+
+
+def write_checkpoint_bundle_manifest(
+    run_dir: str | Path,
+    cfg: DictConfig,
+    *,
+    repo_root: str | Path | None = None,
+) -> Path:
+    """
+    Write ``bundle_manifest.json`` with config/dataset hashes and training seed.
+
+    Parameters:
+        run_dir (str | Path): ``results/runs/<run_id>/``.
+        cfg (DictConfig): Resolved training configuration.
+        repo_root (str | Path | None): Repo root for git metadata.
+
+    Returns:
+        Path: Written ``bundle_manifest.json``.
+    """
+    root = Path(run_dir)
+    ds_path = root / "dataset_manifest.json"
+    ds_hash = hash_file(ds_path) if ds_path.is_file() else None
+    seed_val: int | None = None
+    if "seed" in cfg:
+        seed_val = int(cfg.seed)
+    manifest = CheckpointBundleManifest(
+        schema_version=CHECKPOINT_BUNDLE_SCHEMA_VERSION,
+        created_at=utc_now_iso(),
+        git_commit=git_short_commit(repo_root),
+        seed=seed_val,
+        dataset_manifest_hash=ds_hash,
+        config_hash=hash_config(cfg),
+    )
+    return manifest.write_json(root / CHECKPOINT_BUNDLE_MANIFEST_FILENAME)
 
 
 def validate_checkpoint_bundle(run_dir: str | Path) -> list[str]:
