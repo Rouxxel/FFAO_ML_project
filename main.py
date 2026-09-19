@@ -15,13 +15,28 @@ pip install -e ".[core,dev,ml]"
 
 ``python main.py`` alone does **not** run anything — you must pass ``--run`` or ``--dry-run``.
 
-Examples::
+Quick reference::
 
+    # Plan (no download, training, or eval)
     python main.py --dry-run
+
+    # Full pipeline (import: Zenodo/cache/local → else LBM → dataset/generated_data/)
+    python main.py --run
     python main.py --run --generate-data
     python main.py --run --local-file path/to/cylinder_re100_grid64_last100.h5
-    python main.py --run --with-convlstm --epochs 80 --force
-    python main.py --run --only train_cnn
+    python main.py --run --force
+
+    # Optional ConvLSTM / FNO
+    python main.py --run --with-convlstm --with-fno --epochs 80 --fno-epochs 50
+
+    # Single phase (--run required)
+    python main.py --run --only import
+    python main.py --run --only generate
+    python main.py --run --only train_cnn --epochs 50
+    python main.py --run --from train_cnn
+
+    # Clean slate before re-run
+    python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
 """
 
 # Native imports
@@ -53,14 +68,16 @@ WARNING: `python main.py` does not run the pipeline.
   --dry-run   Show which steps would run (no download, training, or evaluation).
   --run       Actually execute the pipeline (required for real work).
 
-Common commands (full pipeline)
+Quick reference (full pipeline)
 --------------------------------------------------------------------------------
   python main.py --dry-run
+  python main.py --run
+  python main.py --run --generate-data
   python main.py --run --local-file path/to/cylinder_re100_grid64_last100.h5
   python main.py --run --force
-  python main.py --run --with-convlstm --with-fno --epochs 100
+  python main.py --run --with-convlstm --with-fno --epochs 80 --fno-epochs 50
 
-Single step via main.py (still use --run)
+Single phase (--run required)
 --------------------------------------------------------------------------------
   python main.py --run --only generate
   python main.py --run --only import
@@ -76,8 +93,9 @@ Single step via main.py (still use --run)
 Phases: generate, import, cfd_validation, baseline_eval, train_cnn, eval_cnn,
         train_convlstm, compare_multistep, train_fno, eval_fno
 
-Import (auto): tries Zenodo/cache → dataset/zenodo_data/; on failure runs LBM
-→ dataset/generated_data/. Use --generate-data or --only generate to force LBM.
+Import (auto): Zenodo/cache/local HDF5 → dataset/zenodo_data/; on failure LBM
+→ dataset/generated_data/. --generate-data forces LBM on import; --only generate
+runs LBM file generation only (no import).
 
 Individual scripts (same steps, run manually)
 --------------------------------------------------------------------------------
@@ -90,6 +108,13 @@ Individual scripts (same steps, run manually)
   python scripts/train_convlstm.py [--run-id ...]
   python scripts/compare_multistep.py --cnn-run ... --convlstm-run ...
   python scripts/evaluate_re_generalization.py --run-dir ...  (multi-Re)
+
+Reset local outputs (see scripts/clean_pipeline_artifacts.py docstring)
+--------------------------------------------------------------------------------
+  python scripts/clean_pipeline_artifacts.py --list
+  python scripts/clean_pipeline_artifacts.py --preset pipeline --dry-run
+  python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
+  python scripts/clean_pipeline_artifacts.py --target dataset-generated --yes
 
 Install first: pip install -e ".[core,dev,ml]"
 ================================================================================
