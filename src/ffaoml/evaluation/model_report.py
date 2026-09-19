@@ -41,7 +41,8 @@ from ffaoml.evaluation.plots import (
 )
 from ffaoml.evaluation.rollout import rollout_curve, sample_at_report_horizons
 from ffaoml.ml.preprocessing import load_preprocess_stats, normalize_fields
-from ffaoml.models.cnn import build_flow_cnn
+from ffaoml.models.factory import build_flow_model
+from ffaoml.training.checkpointing import load_model_weights
 from ffaoml.training.train import MODEL_FILENAME
 
 """CONSTANTS-----------------------------------------------------------"""
@@ -101,13 +102,12 @@ def load_trained_cnn(cfg: DictConfig, run_dir: str | Path, device: torch.device)
         torch.nn.Module: Eval-ready model.
     """
     _require_torch()
-    model = build_flow_cnn(cfg).to(device)
+    model = build_flow_model(cfg).to(device)
     ckpt_path = Path(run_dir) / MODEL_FILENAME
     if not ckpt_path.is_file():
         raise FileNotFoundError(ckpt_path)
     payload = torch.load(ckpt_path, map_location=device, weights_only=False)
-    state = payload["model_state_dict"] if isinstance(payload, dict) else payload
-    model.load_state_dict(state)
+    load_model_weights(model, payload)
     model.eval()
     return model
 

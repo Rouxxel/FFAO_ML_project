@@ -40,7 +40,8 @@ from ffaoml.ml.conditioning import (
 )
 from ffaoml.ml.preprocessing import load_preprocess_stats, normalize_fields
 from ffaoml.ml.splits import re_split_simulation_ids
-from ffaoml.models.cnn import build_flow_cnn
+from ffaoml.models.factory import build_flow_model
+from ffaoml.training.checkpointing import load_model_weights
 from ffaoml.training.train import MODEL_FILENAME
 
 """CONSTANTS-----------------------------------------------------------"""
@@ -168,14 +169,13 @@ def run_re_generalization_evaluation(
 
     device = torch.device(str(cfg.train.device))
     stats = load_preprocess_stats(run_path / "preprocess_stats.json")
-    model = build_flow_cnn(cfg).to(device)
+    model = build_flow_model(cfg).to(device)
     payload = torch.load(
         run_path / MODEL_FILENAME,
         map_location=device,
         weights_only=False,
     )
-    state = payload["model_state_dict"] if isinstance(payload, dict) else payload
-    model.load_state_dict(state)
+    load_model_weights(model, payload)
     model.eval()
 
     temporal_split = eval_split or str(cfg.dataset.normalization.fit_split)

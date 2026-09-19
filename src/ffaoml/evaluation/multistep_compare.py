@@ -37,8 +37,8 @@ from ffaoml.evaluation.model_rollout import (
 from ffaoml.evaluation.plots import plot_error_vs_horizon
 from ffaoml.evaluation.rollout import rollout_curve, sample_at_report_horizons
 from ffaoml.ml.preprocessing import load_preprocess_stats, normalize_fields
-from ffaoml.models.cnn import build_flow_cnn
-from ffaoml.models.convlstm import build_flow_convlstm
+from ffaoml.models.factory import build_flow_model
+from ffaoml.training.checkpointing import load_model_weights
 from ffaoml.training.train import MODEL_FILENAME
 
 """CONSTANTS-----------------------------------------------------------"""
@@ -78,16 +78,12 @@ def _load_model_weights(
     device: torch.device,
 ) -> torch.nn.Module:
     name = str(cfg.model.name)
-    if name == "cnn":
-        model = build_flow_cnn(cfg).to(device)
-    elif name == "convlstm":
-        model = build_flow_convlstm(cfg).to(device)
-    else:
+    if name not in ("cnn", "convlstm"):
         raise ValueError(f"unsupported model for multistep compare: {name}")
+    model = build_flow_model(cfg).to(device)
     ckpt_path = run_dir / MODEL_FILENAME
     payload = torch.load(ckpt_path, map_location=device, weights_only=False)
-    state = payload["model_state_dict"] if isinstance(payload, dict) else payload
-    model.load_state_dict(state)
+    load_model_weights(model, payload)
     model.eval()
     return model
 
