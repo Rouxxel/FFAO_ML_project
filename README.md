@@ -22,7 +22,7 @@ Dataset stages and URLs: [documentation/DATA_SOURCES.md](documentation/DATA_SOUR
 | Package `ffaoml`, physics, Hydra configs, manifests, CI | Ready |
 | Stage 1 import, Zarr layout, validation figures | Ready (scripts below) |
 | ML `FlowDataset` / normalization (Stage 1 temporal splits) | Ready |
-| Full CNN training | Not started |
+| CNN / ConvLSTM training, baselines, rollout eval | Ready (`ml-stage1-v0.1`) |
 
 ## Stage 1 data (Zenodo Re ≈ 100)
 
@@ -118,6 +118,34 @@ Writes `<run-dir>/figures/` (`vorticity_pred_vs_true.png`, `error_vs_horizon.png
 `rollout_stability.png`) and `model_eval_metrics.json`. Re-wise heatmaps are deferred
 to Stage 3.
 
+### 8. ConvLSTM and multi-step compare (ML Phase 4)
+
+```bash
+python scripts/train_convlstm.py --run-id convlstm_stage1 --epochs 50
+# Optional truncated unroll during training:
+python scripts/train_convlstm.py --run-id convlstm_unroll4 --unroll-steps 4
+
+python scripts/compare_multistep.py \
+  --cnn-run results/runs/cnn_stage1 \
+  --convlstm-run results/runs/convlstm_stage1
+```
+
+Writes `multistep_compare.json` and `figures/cnn_vs_convlstm_horizon.png` with MSE
+at horizons `{1, 10, 25, 50}` (`configs/eval/default.yaml`). See
+[experiments/stage1_multistep_drift.md](experiments/stage1_multistep_drift.md).
+
+### 9. Reproducibility (ML Phase 5)
+
+Training runs persist `config.yaml`, `seed` (top-level Hydra + `training_summary.json`),
+`dataset_manifest.json`, and `bundle_manifest.json` (config and dataset hashes).
+Check a run:
+
+```bash
+python scripts/validate_run_bundle.py --run-dir results/runs/cnn_stage1
+```
+
+End-to-end Stage 1 ML notes: [experiments/stage1_ml_temporal_re100.md](experiments/stage1_ml_temporal_re100.md).
+
 ## Python package
 
 Import name: **`ffaoml`**, [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) under `src/ffaoml/`. Layout and components:
@@ -137,7 +165,8 @@ CI: [documentation/setup/CI.md](documentation/setup/CI.md) (GitHub Actions).
 ### Release tags (optional)
 
 - `foundation-v0.1` — package, configs, CI baseline  
-- `data-stage1-v0.1` — Stage 1 import + validation + ML Phase 0 loaders (after local import/validation)
+- `data-stage1-v0.1` — Stage 1 import + validation (after local import/validation)  
+- `ml-stage1-v0.1` — Stage 1 ML Phases 0–4 (baselines, CNN, ConvLSTM, compare); tag after `pytest` with `[ml]`
 
 ## Documentation
 

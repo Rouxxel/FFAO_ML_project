@@ -63,8 +63,8 @@ Each training run should persist:
 | `preprocess_stats.json` | Normalization fit on train split only |
 | `dataset_manifest.json` | Copy or snapshot reference of the dataset manifest used |
 
-Optional metadata file: `bundle_manifest.json` (`CheckpointBundleManifest`) with
-`dataset_manifest_hash`, `config_hash`, and `git_commit`.
+Training runners also write `bundle_manifest.json` (`CheckpointBundleManifest`) with
+`dataset_manifest_hash`, `config_hash`, `seed`, and `git_commit`.
 
 Validate before publishing a run:
 

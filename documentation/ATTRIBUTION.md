@@ -98,6 +98,31 @@ Third-party **dependencies** (PyTorch, Dedalus, etc.) remain under their own lic
 
 ---
 
+## Stage 1 — Zenodo Re = 100 flow fields
+
+Stage 1 imports use the physics-constrained autoencoder Zenodo release and related
+HDF5 asset documented in [DATA_SOURCES.md](./DATA_SOURCES.md).
+
+| Resource | Citation target |
+|----------|-----------------|
+| Dataset record | https://zenodo.org/records/18669296 |
+| Related code | https://github.com/LucaAddiucci/Physics-Constrained-Convolutional-Autoencoders |
+
+**Recommended credit** when you train on or redistribute imported Zarr derived from
+that HDF5 (in addition to this repository):
+
+```text
+Flow field data from the Zenodo release at https://zenodo.org/records/18669296
+(Physics-Constrained Convolutional Autoencoders for Fluid Flows), imported via the
+FFAO ML Project Stage 1 pipeline; see dataset/manifest.json for import config hash.
+```
+
+Respect the **upstream license** on the Zenodo record and HDF5 in addition to this
+project’s [LICENSE-DATA](../LICENSE-DATA) for artifacts you publish from `dataset/`
+or `results/`.
+
+---
+
 ## Maintainer checklist (when the project evolves)
 
 Update as needed when you:
