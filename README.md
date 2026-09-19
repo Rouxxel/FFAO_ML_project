@@ -13,7 +13,55 @@ simulations as generic images.
    when storage and prior stages allow.
 
 Research questions and success criteria: [documentation/PRD.md](documentation/PRD.md).  
-Dataset stages and URLs: [documentation/DATA_SOURCES.md](documentation/DATA_SOURCES.md).
+Dataset stages and URLs: [documentation/DATA_SOURCES.md](documentation/DATA_SOURCES.md).  
+After `main.py --run`, see [documentation/EXPECTED_RESULTS.md](documentation/EXPECTED_RESULTS.md)
+for where outputs land.
+
+## Repository layout (source only)
+
+Tracked project tree **excluding** gitignored pipeline outputs (`dataset/`, `log/`,
+`results/`, `.cache/`, `outputs/`, `.local_test_runs/`, virtualenvs, caches):
+
+```text
+FFAO_ML_project/
+├── configs/                    # Hydra: dataset, model, train, eval, simulation
+│   ├── config.yaml
+│   ├── dataset/
+│   ├── eval/
+│   ├── model/
+│   ├── simulation/
+│   └── train/
+├── documentation/              # PRD, architecture, contracts, data, legal
+│   ├── setup/                  # CI and platform notes
+│   └── EXPECTED_RESULTS.md     # Pipeline artifacts (generated; not in git)
+├── experiments/                # Stage runbooks and experiment notes
+├── scripts/                    # CLI: import, train, eval, validate, clean
+├── src/
+│   ├── ffaoml/                 # Package: data, ML, training, pipeline, CFD, physics
+│   │   ├── cfd/                # Solver adapters (stub, FD, Dedalus, OpenFOAM hook)
+│   │   ├── data/               # I/O, catalog, Zenodo/LBM import, Zarr layout
+│   │   ├── evaluation/         # Baselines, metrics, rollout, plots
+│   │   ├── ml/                 # FlowDataset, preprocessing, splits
+│   │   ├── models/             # CNN, ConvLSTM, FNO
+│   │   ├── pipeline/           # stage1.py orchestration (used by main.py)
+│   │   ├── physics/            # NS helpers, Reynolds, torch ops
+│   │   ├── training/           # Train loops, losses, checkpoints
+│   │   └── validation/         # Stage 1 CFD validation figures
+│   └── utils/                  # Logging, secure_file_io
+├── tests/
+│   ├── fixtures/               # Mini HDF5 and dataset builders
+│   └── test_*.py
+├── .github/workflows/          # CI and security workflows
+├── main.py                     # Stage 1 end-to-end entry point
+├── pyproject.toml
+├── requirements.txt
+├── CITATION.cff
+├── LICENSE / LICENSE-DATA / NOTICE
+└── README.md
+```
+
+Planning notes at repo root (`CFD_DATA_TASKS.md`, `FOUNDATION_TASKS.md`,
+`ML_EVAL_TASKS.md`) may exist locally; they are optional and not required to run the pipeline.
 
 ## Status
 
@@ -55,8 +103,8 @@ python scripts/clean_pipeline_artifacts.py --preset pipeline --dry-run
 python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
 ```
 
-Selective cleanup: `--dataset-generated`, `--dataset-zenodo`, `--runs`,
-`--run stage1_cnn`, `--preset models`, etc.
+Selective cleanup: `--target dataset-generated`, `--target dataset-zenodo`,
+`--target runs`, `--run stage1_cnn`, `--preset models`, etc. (see script docstring).
 
 ## Stage 1 data (Zenodo Re ≈ 100)
 
@@ -252,6 +300,7 @@ CI: [documentation/setup/CI.md](documentation/setup/CI.md) (GitHub Actions).
 | [documentation/PRD.md](documentation/PRD.md) | Requirements and research questions |
 | [documentation/ARCHITECTURE.md](documentation/ARCHITECTURE.md) | System design and repository layout |
 | [documentation/CONTRACTS.md](documentation/CONTRACTS.md) | CFD / dataset / ML tensor contracts |
+| [documentation/EXPECTED_RESULTS.md](documentation/EXPECTED_RESULTS.md) | Pipeline output paths and success checklist |
 | [documentation/DATA_SOURCES.md](documentation/DATA_SOURCES.md) | Staged datasets (Stage 1 active) |
 | [documentation/REPRODUCIBILITY.md](documentation/REPRODUCIBILITY.md) | Manifests and checkpoint bundles |
 | [documentation/TECH_STACK.md](documentation/TECH_STACK.md) | Technology choices |
