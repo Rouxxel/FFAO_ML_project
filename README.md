@@ -24,6 +24,23 @@ Dataset stages and URLs: [documentation/DATA_SOURCES.md](documentation/DATA_SOUR
 | ML `FlowDataset` / normalization (Stage 1 temporal splits) | Ready |
 | CNN / ConvLSTM training, baselines, rollout eval | Ready (`ml-stage1-v0.1`) |
 
+## One-command pipeline (`main.py`)
+
+From the repo root (after `pip install -e ".[core,dev,ml]"`):
+
+```bash
+python main.py --dry-run          # preview only — does not train or download
+python main.py --run --local-file path/to/cylinder_re100_grid64_last100.h5
+python main.py --run --with-convlstm --epochs 80 --force
+```
+
+Bare `python main.py` prints a usage guide and exits (no work is done). Use **`--run`**
+to execute; **`--dry-run`** to list steps without running them.
+
+Steps: **import** → **CFD validation** → **baseline eval** → **CNN train/eval**;
+optional **ConvLSTM** + multistep compare, **FNO** (`--with-fno`). Use `--only` /
+`--from` on `main.py --run`, or run scripts under `scripts/` for one step at a time.
+
 ## Stage 1 data (Zenodo Re ≈ 100)
 
 Catalog and attribution: [documentation/DATA_SOURCES.md](documentation/DATA_SOURCES.md).  
