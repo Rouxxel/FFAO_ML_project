@@ -158,6 +158,16 @@ python scripts/evaluate_re_generalization.py --run-dir results/runs/cnn_multire
 
 See [experiments/stage3_re_generalization.md](experiments/stage3_re_generalization.md).
 
+### 11. FNO and reconstruction (ML Phase 7)
+
+```bash
+python scripts/train.py --run-id fno_stage1 --model fno --epochs 50
+# Physics-informed loss: train.loss.divergence_weight=0.01 in Hydra overrides
+python scripts/train.py --run-id reconstruct_stage1 --model reconstruct --epochs 50
+```
+
+Details: [experiments/fno_stretch.md](experiments/fno_stretch.md).
+
 ## Python package
 
 Import name: **`ffaoml`**, [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) under `src/ffaoml/`. Layout and components:
