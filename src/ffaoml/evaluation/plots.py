@@ -14,6 +14,7 @@ PRD §13 figures: predicted vs true vorticity and error vs prediction horizon.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 # Third-party imports
 import matplotlib
@@ -147,3 +148,56 @@ def plot_rollout_stability(
         output_path=output_path,
         metric="mse",
     )
+
+
+"""REYNOLDS-----------------------------------------------------------"""
+
+
+def plot_re_generalization_heatmap(
+    per_re: dict[str, Any],
+    *,
+    train_re: list[float],
+    val_re: list[float],
+    test_re: list[float],
+    output_path: str | Path,
+) -> Path:
+    """
+    Heatmap of one-step MSE vs Reynolds (PRD §13 item 12).
+
+    Parameters:
+        per_re (dict[str, Any]): Output of ``re_generalization`` per-Re metrics.
+        train_re (list[float]): Training Reynolds list from config.
+        val_re (list[float]): Validation (interpolation) Reynolds.
+        test_re (list[float]): Test (extrapolation) Reynolds.
+        output_path (str | Path): PNG destination.
+
+    Returns:
+        Path: Written figure path.
+    """
+    entries = sorted(per_re.values(), key=lambda item: float(item["re"]))
+    if not entries:
+        raise ValueError("per_re is empty")
+    res = [float(e["re"]) for e in entries]
+    errors = [float(e["metrics"]["mse"]) for e in entries]
+    regimes = [str(e["regime"]) for e in entries]
+
+    fig, ax = plt.subplots(figsize=(max(6, len(res) * 0.6), 3.5))
+    data = np.array(errors, dtype=float)[None, :]
+    im = ax.imshow(data, aspect="auto", cmap="viridis")
+    ax.set_xticks(range(len(res)))
+    ax.set_xticklabels([str(int(r)) if r == int(r) else str(r) for r in res])
+    ax.set_yticks([0])
+    ax.set_yticklabels(["one-step MSE"])
+    for idx, (err, regime) in enumerate(zip(errors, regimes, strict=True)):
+        ax.text(idx, 0, f"{err:.3g}\n({regime})", ha="center", va="center", color="white")
+    fig.colorbar(im, ax=ax, fraction=0.05, pad=0.04)
+    ax.set_title(
+        "Generalization vs Re "
+        f"(train={train_re}, val={val_re}, test={test_re})"
+    )
+    fig.tight_layout()
+    destination = Path(output_path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(destination, dpi=150)
+    plt.close(fig)
+    return destination

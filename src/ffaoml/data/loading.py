@@ -52,6 +52,58 @@ def load_split_tensor(
     return stack_fields_tensor(window, channels=channels)
 
 
+def load_pooled_split_tensor(
+    cfg: DictConfig,
+    split: str,
+    *,
+    channels: Sequence[str] | None = None,
+) -> np.ndarray:
+    """
+    Load and concatenate trajectories for a split (multi-Re or Stage 1).
+
+    Parameters:
+        cfg (DictConfig): Composed config.
+        split (str): ``train``, ``val``, or ``test``.
+        channels (Sequence[str] | None): Channel order override.
+
+    Returns:
+        np.ndarray: ``(n_time_total, C, H, W)`` concatenated along time.
+    """
+    if bool(cfg.dataset.get("use_re_splits", False)):
+        from ffaoml.ml.splits import re_split_simulation_ids
+
+        chunks = [
+            load_simulation_tensor(cfg, sim_id, split, channels=channels)
+            for sim_id in re_split_simulation_ids(cfg)[split]
+        ]
+        if not chunks:
+            raise ValueError(f"no simulations for split={split}")
+        return np.concatenate(chunks, axis=0)
+    return load_split_tensor(cfg, split, channels=channels)
+
+
+def load_simulation_tensor(
+    cfg: DictConfig,
+    sim_id: str,
+    split: str,
+    *,
+    channels: Sequence[str] | None = None,
+) -> np.ndarray:
+    """
+    Load one simulation's temporal window for a named split.
+
+    Parameters:
+        cfg (DictConfig): Composed config with ``dataset.temporal_split``.
+        sim_id (str): ``metadata.csv`` simulation id.
+        split (str): ``train``, ``val``, or ``test`` time bounds.
+        channels (Sequence[str] | None): Channel order override.
+
+    Returns:
+        np.ndarray: ``(n_time, n_channels, height, width)`` float32 tensor.
+    """
+    return load_split_tensor(cfg, split, channels=channels, sim_id=sim_id)
+
+
 def split_shape(cfg: DictConfig, split: str) -> tuple[int, int, int, int]:
     """
     Return ``(n_time, n_channels, ny, nx)`` for a split without loading all data.
