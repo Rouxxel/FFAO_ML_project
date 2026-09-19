@@ -17,7 +17,6 @@ from pathlib import Path
 from omegaconf import OmegaConf
 
 # Project imports
-from ffaoml.training.bundle import copy_dataset_manifest_snapshot
 from ffaoml.manifests import (
     CHECKPOINT_BUNDLE_FILES,
     CHECKPOINT_BUNDLE_MANIFEST_FILENAME,
@@ -28,6 +27,7 @@ from ffaoml.manifests import (
     validate_checkpoint_bundle,
     write_checkpoint_bundle_manifest,
 )
+from ffaoml.training.bundle import copy_dataset_manifest_snapshot
 
 """CONSTANTS-----------------------------------------------------------"""
 REPO_ROOT = Path(__file__).resolve().parents[1]
