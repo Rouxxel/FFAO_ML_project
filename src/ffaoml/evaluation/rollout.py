@@ -96,16 +96,20 @@ def rollout_curve(
     if horizon < 1:
         raise ValueError("horizon must be >= 1")
     t_total = series.shape[0]
-    max_horizon = min(horizon, t_total - 1)
+    min_start = 1 if baseline == "linear" else 0
     if baseline == "linear" and t_total < 3:
-        max_horizon = 0
+        raise ValueError("series too short for linear rollout (need T>=3)")
+    # Leave at least one valid start index (val split can be only ~15 frames).
+    max_horizon = min(horizon, t_total - min_start - 1)
     if max_horizon < 1:
-        raise ValueError("series too short for requested rollout")
+        raise ValueError(
+            f"series length {t_total} is too short for rollout horizon {horizon} "
+            f"with baseline '{baseline}'"
+        )
 
     mse_sums = np.zeros(max_horizon, dtype=np.float64)
     rel_sums = np.zeros(max_horizon, dtype=np.float64)
     n_starts = 0
-    min_start = 1 if baseline == "linear" else 0
     for start in range(min_start, t_total - max_horizon):
         n_starts += 1
         if baseline == "persistence":
