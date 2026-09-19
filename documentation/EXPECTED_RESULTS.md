@@ -71,7 +71,7 @@ Paths are relative to the **repository root**. Everything here is **gitignored**
 │       └── stage1_cnn/             # Default CNN run id (--cnn-run-id)
 │           ├── config.yaml         # Resolved Hydra config for this run
 │           ├── preprocess_stats.json
-│           ├── manifest.json       # Dataset manifest snapshot / reference
+│           ├── dataset_manifest.json   # Snapshot of dataset/.../manifest.json at train time
 │           ├── bundle_manifest.json
 │           ├── model.pt            # Best checkpoint used for eval
 │           ├── checkpoint_epoch_*.pt   # Periodic checkpoints (every 10 epochs)
