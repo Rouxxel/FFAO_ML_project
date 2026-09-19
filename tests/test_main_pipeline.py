@@ -35,6 +35,7 @@ def test_stage1_pipeline_dry_run() -> None:
     results = run_stage1_pipeline(opts)
     assert results["status"] == "dry_run"
     assert "import" in results["plan"]["phases"]
+    assert "stage1_import" in results["plan"]
     assert "train_cnn" in results["plan"]["phases"]
     assert "compare_multistep" in results["plan"]["phases"]
 

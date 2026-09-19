@@ -48,6 +48,17 @@ def test_rollout_curve_on_synthetic_sine() -> None:
     assert curve.mse[0] <= curve.mse[-1]
 
 
+def test_rollout_linear_on_short_val_window() -> None:
+    """Stage 1 val temporal split has 15 frames; horizon 50 must cap, not fail."""
+    n_time = 15
+    series = np.random.default_rng(0).standard_normal((n_time, 2, 4, 4)).astype(
+        np.float32
+    )
+    curve = rollout_curve(series, "linear", horizon=50)
+    assert curve.n_starts >= 1
+    assert len(curve.horizons) == 13
+
+
 @pytest.fixture(scope="module")
 def eval_cfg():
     if not FIXTURE_H5.is_file():
