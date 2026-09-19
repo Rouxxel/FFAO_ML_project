@@ -18,6 +18,7 @@ pip install -e ".[core,dev,ml]"
 Examples::
 
     python main.py --dry-run
+    python main.py --run --generate-data
     python main.py --run --local-file path/to/cylinder_re100_grid64_last100.h5
     python main.py --run --with-convlstm --epochs 80 --force
     python main.py --run --only train_cnn
@@ -61,6 +62,8 @@ Common commands (full pipeline)
 
 Single step via main.py (still use --run)
 --------------------------------------------------------------------------------
+  python main.py --run --only generate
+  python main.py --run --only import
   python main.py --run --only import --local-file path/to/data.h5
   python main.py --run --only cfd_validation
   python main.py --run --only baseline_eval
@@ -70,11 +73,15 @@ Single step via main.py (still use --run)
   python main.py --run --only compare_multistep --with-convlstm
   python main.py --run --from train_cnn
 
-Phases: import, cfd_validation, baseline_eval, train_cnn, eval_cnn,
+Phases: generate, import, cfd_validation, baseline_eval, train_cnn, eval_cnn,
         train_convlstm, compare_multistep, train_fno, eval_fno
+
+Import (auto): tries Zenodo/cache → dataset/zenodo_data/; on failure runs LBM
+→ dataset/generated_data/. Use --generate-data or --only generate to force LBM.
 
 Individual scripts (same steps, run manually)
 --------------------------------------------------------------------------------
+  python scripts/generate_stage1_cylinder_h5.py   # if Zenodo has no HDF5
   python scripts/download_stage1_zenodo.py [--local-file ...]
   python scripts/validate_stage1_zenodo.py
   python scripts/evaluate.py [--run-id ...]
@@ -101,7 +108,7 @@ def build_parser() -> argparse.ArgumentParser:
     Returns:
         argparse.ArgumentParser: Configured parser.
     """
-    phase_choices = [p.value for p in PHASE_ORDER]
+    phase_choices = [p.value for p in PipelinePhase]
     parser = argparse.ArgumentParser(
         description="FFAO ML Stage 1: data import through training and evaluation.",
     )
@@ -124,7 +131,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--local-file",
         type=Path,
         default=None,
-        help="Upstream HDF5 for Zenodo import (see scripts/download_stage1_zenodo.py).",
+        help="Existing HDF5 → import under dataset/zenodo_data/.",
+    )
+    parser.add_argument(
+        "--generate-data",
+        action="store_true",
+        help="Force LBM generation → dataset/generated_data/ (skip Zenodo).",
+    )
+    parser.add_argument(
+        "--lbm-fast",
+        action="store_true",
+        help="Short LBM run when generating (smoke tests only).",
     )
     parser.add_argument(
         "--dataset-root",
@@ -234,6 +251,8 @@ def main(argv: list[str] | None = None) -> int:
         hydra_overrides=list(args.hydra_overrides),
         force=args.force,
         dry_run=args.dry_run,
+        generate_data=args.generate_data,
+        lbm_fast=args.lbm_fast,
     )
     only = PipelinePhase(args.only) if args.only else None
     start_from = PipelinePhase(args.start_from) if args.start_from else None
