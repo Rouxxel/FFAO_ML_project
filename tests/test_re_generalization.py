@@ -31,6 +31,7 @@ from ffaoml.ml.dataset import FlowMultiReDataset
 from ffaoml.ml.preprocessing import fit_preprocess_stats
 from ffaoml.models.cnn import build_flow_cnn
 from ffaoml.training.train import run_cnn_training
+
 """CONSTANTS-----------------------------------------------------------"""
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WORK = REPO_ROOT / ".local_test_runs" / "re_generalization"
@@ -43,6 +44,7 @@ def _build_multi_re_stub_dataset(output_root: Path, **kwargs) -> Path:
     assert spec.loader is not None
     spec.loader.exec_module(module)
     return module.build_multi_re_stub_dataset(output_root, **kwargs)
+
 
 SPLIT_OVERRIDES = [
     "dataset=splits",

@@ -223,7 +223,9 @@ def run_re_generalization_evaluation(
         "per_re": per_re,
         "experiments": {
             "exp1_in_distribution": [
-                k for k, v in per_re.items() if v["experiment"] == "exp1_in_distribution"
+                k
+                for k, v in per_re.items()
+                if v["experiment"] == "exp1_in_distribution"
             ],
             "exp2_interpolation": [
                 k for k, v in per_re.items() if v["experiment"] == "exp2_interpolation"

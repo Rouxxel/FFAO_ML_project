@@ -100,10 +100,7 @@ def fit_preprocess_stats(cfg: DictConfig) -> PreprocessStats:
         sim_ids = re_split_simulation_ids(cfg)[fit_split]
         if not sim_ids:
             raise ValueError(f"no train simulations for fit_split={fit_split}")
-        chunks = [
-            load_simulation_tensor(cfg, sim_id, fit_split)
-            for sim_id in sim_ids
-        ]
+        chunks = [load_simulation_tensor(cfg, sim_id, fit_split) for sim_id in sim_ids]
         tensor = np.concatenate(chunks, axis=0)
         re_bounds = fit_re_scaling(cfg)
         re_min, re_max = re_bounds.re_min, re_bounds.re_max

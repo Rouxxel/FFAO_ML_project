@@ -24,8 +24,10 @@ from hydra.core.global_hydra import GlobalHydra
 # Project imports
 from ffaoml.config import config_dir
 from ffaoml.data.sources.zenodo_re100 import import_stage1_from_config
-from ffaoml.ml.reconstruction import FlowReconstructionDataset, build_reconstruction_datasets
 from ffaoml.ml.preprocessing import fit_preprocess_stats
+from ffaoml.ml.reconstruction import (
+    FlowReconstructionDataset,
+)
 from ffaoml.models.factory import build_flow_model
 from ffaoml.training.train import run_cnn_training
 

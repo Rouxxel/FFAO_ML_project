@@ -40,7 +40,9 @@ Layers
                     (treat a JSON file as a list[dict] "collection")
 """
 
-#Native imports
+# Native imports
+from __future__ import annotations
+
 import csv
 import io
 import json
@@ -49,37 +51,38 @@ import stat
 import tempfile
 import threading
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
-#Optional dependency - only required by the read_yaml / write_yaml helpers
+# Optional dependency - only required by the read_yaml / write_yaml helpers
 try:
     import yaml  # type: ignore
+
     _HAS_YAML = True
 except ImportError:
     _HAS_YAML = False
 
-PathLike = Union[str, os.PathLike]
+PathLike = str | os.PathLike[str]
 
 
 # --- CONFIGURATION AREA ---
-#Maximum number of bytes any read_* helper will pull into memory. Guards
-#against accidentally (or maliciously) loading a multi-GB file. Override per
-#call with the ``max_bytes`` argument, or change this module-level default.
+# Maximum number of bytes any read_* helper will pull into memory. Guards
+# against accidentally (or maliciously) loading a multi-GB file. Override per
+# call with the ``max_bytes`` argument, or change this module-level default.
 MAX_READ_BYTES: int = 50 * 1024 * 1024  # 50 MiB
 
-#When not None, every path is resolved and required to live inside this root.
-#Set it once at startup (e.g. to your project's data dir) via set_allowed_root.
-_allowed_root: Optional[Path] = None
+# When not None, every path is resolved and required to live inside this root.
+# Set it once at startup (e.g. to your project's data dir) via set_allowed_root.
+_allowed_root: Path | None = None
 
-#Sentinel so callers can pass default=None to read_json and still distinguish
-#"file missing" from "file contained null".
+# Sentinel so callers can pass default=None to read_json and still distinguish
+# "file missing" from "file contained null".
 _RAISE = object()
 
-#Per-path locks - created on first access. Keyed by the resolved path string.
+# Per-path locks - created on first access. Keyed by the resolved path string.
 _locks: dict[str, threading.Lock] = {}
 _locks_meta_lock = threading.Lock()  # guards the _locks dict itself
 
-#Resolved paths and directories that must never be written by pipeline code.
+# Resolved paths and directories that must never be written by pipeline code.
 _readonly_paths: set[Path] = set()
 _readonly_dirs: set[Path] = set()
 
@@ -102,7 +105,7 @@ class ReadOnlyPathError(FileStoreError):
 
 
 # --- CONFIG HELPERS ---
-def set_allowed_root(root: Optional[PathLike]) -> None:
+def set_allowed_root(root: PathLike | None) -> None:
     """Confine all subsequent file access to *root* (or disable with ``None``).
 
     Parameters:
@@ -113,7 +116,7 @@ def set_allowed_root(root: Optional[PathLike]) -> None:
     _allowed_root = Path(root).resolve() if root is not None else None
 
 
-def get_allowed_root() -> Optional[Path]:
+def get_allowed_root() -> Path | None:
     """Return the currently configured allowed root, or ``None`` if disabled."""
     return _allowed_root
 
@@ -166,7 +169,7 @@ def _get_lock(path: Path) -> threading.Lock:
         return _locks[key]
 
 
-def _read_bytes_unlocked(path: Path, max_bytes: Optional[int]) -> bytes:
+def _read_bytes_unlocked(path: Path, max_bytes: int | None) -> bytes:
     """Read *path* enforcing *max_bytes*. Assumes the lock is already held."""
     if not path.is_file():
         raise FileNotFoundError(f"No such file: '{path}'")
@@ -179,8 +182,8 @@ def _read_bytes_unlocked(path: Path, max_bytes: Optional[int]) -> bytes:
             )
 
     with path.open("rb") as fh:
-        #Read one extra byte to detect files that grew between stat and read
-        #(TOCTOU), e.g. another writer appending concurrently.
+        # Read one extra byte to detect files that grew between stat and read
+        # (TOCTOU), e.g. another writer appending concurrently.
         limit = -1 if max_bytes is None else max_bytes + 1
         data = fh.read(limit)
 
@@ -200,9 +203,9 @@ def _atomic_write_unlocked(path: Path, data: bytes) -> None:
     """
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    #Capture the existing file mode so we can preserve it across the replace
-    #(mkstemp creates 0o600 which is often too strict for shared configs).
-    existing_mode: Optional[int] = None
+    # Capture the existing file mode so we can preserve it across the replace
+    # (mkstemp creates 0o600 which is often too strict for shared configs).
+    existing_mode: int | None = None
     if path.exists():
         existing_mode = stat.S_IMODE(path.stat().st_mode)
 
@@ -219,8 +222,8 @@ def _atomic_write_unlocked(path: Path, data: bytes) -> None:
             os.chmod(tmp_path, existing_mode)
         os.replace(tmp_path, path)  # atomic
     finally:
-        #If os.replace succeeded the temp file is already gone; this only
-        #cleans up when something failed before/at the replace.
+        # If os.replace succeeded the temp file is already gone; this only
+        # cleans up when something failed before/at the replace.
         if tmp_path.exists():
             tmp_path.unlink()
 
@@ -228,7 +231,7 @@ def _atomic_write_unlocked(path: Path, data: bytes) -> None:
 # ---------------------------------------------------------------------------
 # Primitives: bytes & text
 # ---------------------------------------------------------------------------
-def read_bytes(path: PathLike, *, max_bytes: Optional[int] = MAX_READ_BYTES) -> bytes:
+def read_bytes(path: PathLike, *, max_bytes: int | None = MAX_READ_BYTES) -> bytes:
     """Read and return the raw bytes of *path*.
 
     Parameters:
@@ -255,7 +258,7 @@ def read_text(
     path: PathLike,
     *,
     encoding: str = "utf-8",
-    max_bytes: Optional[int] = MAX_READ_BYTES,
+    max_bytes: int | None = MAX_READ_BYTES,
 ) -> str:
     """Read and return the text content of *path* (default UTF-8)."""
     return read_bytes(path, max_bytes=max_bytes).decode(encoding)
@@ -274,7 +277,7 @@ def read_json(
     *,
     default: Any = _RAISE,
     encoding: str = "utf-8",
-    max_bytes: Optional[int] = MAX_READ_BYTES,
+    max_bytes: int | None = MAX_READ_BYTES,
 ) -> Any:
     """Read and parse a JSON file.
 
@@ -323,7 +326,7 @@ def read_csv(
     path: PathLike,
     *,
     encoding: str = "utf-8",
-    max_bytes: Optional[int] = MAX_READ_BYTES,
+    max_bytes: int | None = MAX_READ_BYTES,
     **reader_kwargs: Any,
 ) -> list[dict]:
     """Read a CSV file into a list of row dicts (via ``csv.DictReader``).
@@ -340,7 +343,7 @@ def write_csv(
     path: PathLike,
     rows: list[dict],
     *,
-    fieldnames: Optional[list[str]] = None,
+    fieldnames: list[str] | None = None,
     encoding: str = "utf-8",
     **writer_kwargs: Any,
 ) -> None:
@@ -382,7 +385,7 @@ def read_yaml(
     *,
     default: Any = _RAISE,
     encoding: str = "utf-8",
-    max_bytes: Optional[int] = MAX_READ_BYTES,
+    max_bytes: int | None = MAX_READ_BYTES,
 ) -> Any:
     """Read and parse a YAML file using ``yaml.safe_load`` (no code execution).
 
@@ -420,20 +423,21 @@ def write_yaml(
 # ---------------------------------------------------------------------------
 # These hold the per-file lock for the whole read-modify-write transaction, so
 # concurrent create/update/delete calls on the same file cannot interleave.
-def _load_records(path: Path, max_bytes: Optional[int]) -> list:
+def _load_records(path: Path, max_bytes: int | None) -> list:
     """Load a JSON list from *path* (empty list if missing). Lock must be held."""
     if not path.is_file():
         return []
     raw = _read_bytes_unlocked(path, max_bytes)
     data = json.loads(raw.decode("utf-8"))
     if not isinstance(data, list):
+        kind = type(data).__name__
         raise FileStoreError(
-            f"Record helpers expect a JSON array at '{path}', got {type(data).__name__}."
+            f"Record helpers expect a JSON array at '{path}', got {kind}."
         )
     return data
 
 
-def read_all(path: PathLike, *, max_bytes: Optional[int] = MAX_READ_BYTES) -> list:
+def read_all(path: PathLike, *, max_bytes: int | None = MAX_READ_BYTES) -> list:
     """Return every record in the JSON file at *path* (``[]`` if it doesn't exist)."""
     resolved = _resolve_path(path)
     with _get_lock(resolved):
@@ -445,9 +449,7 @@ def save_all(path: PathLike, data: list) -> None:
     write_json(path, data)
 
 
-def find_by_id(
-    path: PathLike, record_id: Any, *, id_field: str = "id"
-) -> Optional[dict]:
+def find_by_id(path: PathLike, record_id: Any, *, id_field: str = "id") -> dict | None:
     """Return the first record whose *id_field* equals *record_id*, or ``None``."""
     for record in read_all(path):
         if record.get(id_field) == record_id:
@@ -502,9 +504,7 @@ def update_record(
     return updated_record
 
 
-def delete_record(
-    path: PathLike, record_id: Any, *, id_field: str = "id"
-) -> dict:
+def delete_record(path: PathLike, record_id: Any, *, id_field: str = "id") -> dict:
     """Remove the record matching *record_id* from *path* and persist.
 
     Raises:
@@ -528,12 +528,13 @@ def delete_record(
             )
 
         _atomic_write_unlocked(
-            resolved, json.dumps(remaining, indent=2, ensure_ascii=False).encode("utf-8")
+            resolved,
+            json.dumps(remaining, indent=2, ensure_ascii=False).encode("utf-8"),
         )
     return deleted_record
 
 
-#Example usage
+# Example usage
 """
 from src.utils import secure_file_io as fio
 

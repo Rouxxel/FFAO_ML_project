@@ -7,7 +7,8 @@
 ### @date 2026
 #############################################################################
 
-Finalize training runs with reproducibility metadata (``documentation/REPRODUCIBILITY.md``).
+Finalize training runs with reproducibility metadata
+(``documentation/REPRODUCIBILITY.md``).
 """
 
 # Native imports

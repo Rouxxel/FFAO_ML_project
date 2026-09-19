@@ -39,6 +39,7 @@ from ffaoml.manifests import (
     dataset_manifest_path,
     git_short_commit,
     hash_config,
+    hash_file,
 )
 from ffaoml.ml.dataset import build_flow_unroll_datasets
 from ffaoml.ml.preprocessing import (
@@ -47,7 +48,6 @@ from ffaoml.ml.preprocessing import (
     save_preprocess_stats,
 )
 from ffaoml.models.convlstm import build_flow_convlstm
-from ffaoml.manifests import hash_file
 from ffaoml.training.bundle import finalize_training_bundle
 from ffaoml.training.losses import build_training_loss
 from ffaoml.training.train import MODEL_FILENAME, TRAINING_SUMMARY_FILENAME

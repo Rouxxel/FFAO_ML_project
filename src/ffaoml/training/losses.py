@@ -67,7 +67,9 @@ def build_loss_fn(field_mse: bool = True) -> nn.Module:
     raise ValueError("at least one loss term must be enabled")
 
 
-def build_training_loss(cfg: DictConfig) -> Callable[[torch.Tensor, torch.Tensor], torch.Tensor]:
+def build_training_loss(
+    cfg: DictConfig,
+) -> Callable[[torch.Tensor, torch.Tensor], torch.Tensor]:
     """
     Compose field MSE with optional divergence penalty on predicted velocity.
 

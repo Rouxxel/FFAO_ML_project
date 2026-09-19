@@ -178,7 +178,9 @@ try:
             if steps < 1:
                 raise ValueError("steps must be >= 1")
             if teacher_forcing and (target_seq is None or target_seq.size(1) < steps):
-                raise ValueError("teacher_forcing requires target_seq with length steps")
+                raise ValueError(
+                    "teacher_forcing requires target_seq with length steps"
+                )
 
             preds: list[torch.Tensor] = []
             x = x0
@@ -222,7 +224,8 @@ except ImportError:  # pragma: no cover
 
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             raise ImportError(
-                "torch is required for FlowConvLSTM; install with pip install -e '.[ml]'"
+                "torch is required for FlowConvLSTM; "
+                "install with pip install -e '.[ml]'"
             )
 
 

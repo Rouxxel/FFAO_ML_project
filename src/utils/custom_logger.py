@@ -52,7 +52,9 @@ try:
     file_handler = logging.FileHandler(log_file, encoding="utf-8")
     file_handler.setFormatter(log_format)
 except OSError as exc:
-    sys.stderr.write(f"ERROR: Failed to create log file under '{LOG_DIRECTORY}': {exc}\n")
+    sys.stderr.write(
+        f"ERROR: Failed to create log file under '{LOG_DIRECTORY}': {exc}\n"
+    )
     sys.stderr.write("Continuing with console-only logging.\n")
     file_handler = None
 

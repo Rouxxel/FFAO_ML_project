@@ -20,13 +20,15 @@ import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 # Third-party imports
 from hydra import compose, initialize_config_dir
 from omegaconf import DictConfig
+
+from ffaoml.app_logging import log_handler
 
 # Project imports
 from ffaoml.config import config_dir, run_directory, seed_from_config
@@ -39,7 +41,6 @@ from ffaoml.evaluation.runner import run_baseline_evaluation
 from ffaoml.manifests import dataset_manifest_path
 from ffaoml.training.train import run_cnn_training
 from ffaoml.training.train_convlstm import run_convlstm_training
-from ffaoml.app_logging import log_handler
 from ffaoml.validation.stage1_zenodo import run_stage1_validation
 
 """CONSTANTS-----------------------------------------------------------"""
@@ -49,7 +50,7 @@ DEFAULT_RUNS_ROOT = Path("results/runs")
 """TYPES-----------------------------------------------------------"""
 
 
-class PipelinePhase(str, Enum):
+class PipelinePhase(StrEnum):
     """Ordered Stage 1 pipeline steps."""
 
     IMPORT = "import"
@@ -153,7 +154,9 @@ def _run_artifact(run_dir: Path, name: str) -> bool:
     return (run_dir / name).is_file()
 
 
-def _phase_done(phase: PipelinePhase, opts: Stage1PipelineOptions, cfg: DictConfig) -> bool:
+def _phase_done(
+    phase: PipelinePhase, opts: Stage1PipelineOptions, cfg: DictConfig
+) -> bool:
     runs = opts.repo_root / opts.runs_root
     if phase == PipelinePhase.IMPORT:
         return _dataset_import_done(cfg)
@@ -195,7 +198,11 @@ def _phases_to_run(
             if p not in (PipelinePhase.TRAIN_CONVLSTM, PipelinePhase.COMPARE_MULTISTEP)
         ]
     if not opts.with_fno:
-        phases = [p for p in phases if p not in (PipelinePhase.TRAIN_FNO, PipelinePhase.EVAL_FNO)]
+        phases = [
+            p
+            for p in phases
+            if p not in (PipelinePhase.TRAIN_FNO, PipelinePhase.EVAL_FNO)
+        ]
     if only is not None:
         return [only]
     if start_from is None:
@@ -222,14 +229,18 @@ def _check_prerequisites(
             PipelinePhase.TRAIN_FNO,
         ) and not _dataset_import_done(cfg):
             missing.append("dataset import")
-        if phase == PipelinePhase.EVAL_CNN and not _run_artifact(runs / opts.cnn_run_id, "model.pt"):
+        if phase == PipelinePhase.EVAL_CNN and not _run_artifact(
+            runs / opts.cnn_run_id, "model.pt"
+        ):
             missing.append(f"CNN run {opts.cnn_run_id}/model.pt")
         if phase == PipelinePhase.COMPARE_MULTISTEP:
             if not _run_artifact(runs / opts.cnn_run_id, "model.pt"):
                 missing.append(f"CNN run {opts.cnn_run_id}/model.pt")
             if not _run_artifact(runs / opts.convlstm_run_id, "model.pt"):
                 missing.append(f"ConvLSTM run {opts.convlstm_run_id}/model.pt")
-        if phase == PipelinePhase.EVAL_FNO and not _run_artifact(runs / opts.fno_run_id, "model.pt"):
+        if phase == PipelinePhase.EVAL_FNO and not _run_artifact(
+            runs / opts.fno_run_id, "model.pt"
+        ):
             missing.append(f"FNO run {opts.fno_run_id}/model.pt")
     if missing:
         lines = "\n".join(f"  - {item}" for item in missing)

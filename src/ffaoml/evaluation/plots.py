@@ -189,11 +189,12 @@ def plot_re_generalization_heatmap(
     ax.set_yticks([0])
     ax.set_yticklabels(["one-step MSE"])
     for idx, (err, regime) in enumerate(zip(errors, regimes, strict=True)):
-        ax.text(idx, 0, f"{err:.3g}\n({regime})", ha="center", va="center", color="white")
+        ax.text(
+            idx, 0, f"{err:.3g}\n({regime})", ha="center", va="center", color="white"
+        )
     fig.colorbar(im, ax=ax, fraction=0.05, pad=0.04)
     ax.set_title(
-        "Generalization vs Re "
-        f"(train={train_re}, val={val_re}, test={test_re})"
+        f"Generalization vs Re (train={train_re}, val={val_re}, test={test_re})"
     )
     fig.tight_layout()
     destination = Path(output_path)

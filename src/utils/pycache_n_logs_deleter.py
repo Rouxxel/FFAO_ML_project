@@ -1,19 +1,20 @@
 """
-This script recursively scans the project starting from the resolved root directory 
+This script recursively scans the project starting from the resolved root directory
 and deletes target folders matching the specified names (e.g., '__pycache__', 'logs').
 
 ### How It Works:
-1. **Directory Climbing**: When executed, the script climbs up directory levels starting 
-    from the file's current location (`__file__`) until it finds a parent folder whose 
-    name matches `ROOT_FOLDER`. This ensures it stays within and operates precisely on 
+1. **Directory Climbing**: When executed, the script climbs up directory levels starting
+    from the file's current location (`__file__`) until it finds a parent folder whose
+    name matches `ROOT_FOLDER`. This ensures it stays within and operates precisely on
     the project root without leaking into outer folders (like C:\\ or user directories).
-2. **Recursive Traversal**: Starting from that matched root folder, it walks recursively 
-    down through all subdirectories (using `os.walk`) to locate and completely delete 
+2. **Recursive Traversal**: Starting from that matched root folder, it walks recursively
+    down through all subdirectories (using `os.walk`) to locate and completely delete
     any folder matching the entries specified in `FOLDERS_TO_REMOVE`.
 
 ### Variables & Setup:
 - **`ROOT_FOLDER` (string)**:
-    Set this to the exact name of your project's root directory (e.g., `"drone_battery_performance_prediction"`).
+    Set this to the exact name of your project's root directory
+    (e.g., `"drone_battery_performance_prediction"`).
   *Note: The script will fail to run if this is left empty, serving as a safety lock.*
 
 - **`FOLDERS_TO_REMOVE` (list of strings)**:
@@ -37,12 +38,14 @@ and deletes target folders matching the specified names (e.g., '__pycache__', 'l
 """
 
 import os
-import sys
 import shutil
+import sys
 
 # FORCE USER TO SET THE ROOT FOLDER NAME (e.g. "drone_battery_performance_prediction")
-ROOT_FOLDER = "FFAO_ML_project"  # <-- Set this to your project's root folder name (case-insensitive)
+# Set to your project's root folder name (case-insensitive).
+ROOT_FOLDER = "FFAO_ML_project"
 FOLDERS_TO_REMOVE = ["__pycache__", "log", "logs", ".pytest_cache", "build", "dist"]
+
 
 def find_project_root_by_name(start_path: str, target_name: str) -> str:
     """
@@ -52,25 +55,30 @@ def find_project_root_by_name(start_path: str, target_name: str) -> str:
     current = os.path.abspath(start_path)
     if os.path.isfile(current):
         current = os.path.dirname(current)
-        
+
     target_lower = target_name.strip().lower()
     while True:
         if os.path.basename(current).lower() == target_lower:
             return current
-        
+
         parent = os.path.dirname(current)
         if parent == current:  # Reached the root of the file system
             break
         current = parent
-        
-    print(f"Error: Could not find any parent directory named '{target_name}' starting from '{os.path.abspath(start_path)}'.")
+
+    start = os.path.abspath(start_path)
+    print(
+        f"Error: Could not find any parent directory named '{target_name}' "
+        f"starting from '{start}'."
+    )
     sys.exit(1)
+
 
 def remove_folders(root_dir: str, folders_to_remove: list = ["__pycache__", "logs"]):
     """
     Removes folders from the specified root directory and its subdirectories.
     by default it will remove __pycache__ and logs folders
-    """  
+    """
     # Check if directory exists
     if not os.path.exists(root_dir):
         print(f"Error: The specified root directory does not exist: {root_dir}")
@@ -87,15 +95,22 @@ def remove_folders(root_dir: str, folders_to_remove: list = ["__pycache__", "log
                 except Exception as e:
                     print(f"Failed to delete {folder_path}: {e}")
 
+
 if __name__ == "__main__":
     if not ROOT_FOLDER:
-        print("Error: ROOT_FOLDER is not set! Please open this script and specify your project's root folder name in the 'ROOT_FOLDER' variable.")
+        print(
+            "Error: ROOT_FOLDER is not set! Open this script and set "
+            "your project's root folder name in ROOT_FOLDER."
+        )
         sys.exit(1)
-        
+
     # Find the actual root directory by climbing up from the script's location
     actual_root = find_project_root_by_name(__file__, ROOT_FOLDER)
-    
-    # Use user-specified folders to remove, otherwise default to ["__pycache__", "logs"]
-    targets = FOLDERS_TO_REMOVE if FOLDERS_TO_REMOVE else ["__pycache__", "logs", "obj", "bin", ".pytest_cache", "build", "dist"]
-    remove_folders(actual_root, targets)
 
+    # Use user-specified folders to remove, otherwise default to ["__pycache__", "logs"]
+    targets = (
+        FOLDERS_TO_REMOVE
+        if FOLDERS_TO_REMOVE
+        else ["__pycache__", "logs", "obj", "bin", ".pytest_cache", "build", "dist"]
+    )
+    remove_folders(actual_root, targets)
