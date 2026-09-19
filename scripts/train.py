@@ -25,6 +25,7 @@ from pathlib import Path
 from hydra import compose, initialize_config_dir
 
 # Project imports
+from ffaoml.app_logging import log_handler
 from ffaoml.config import config_dir, run_directory, seed_from_config
 from ffaoml.training.train import run_cnn_training
 
@@ -75,11 +76,11 @@ def main() -> None:
     out_dir = args.output_dir or run_directory(cfg.paths.runs_root, args.run_id)
     result = run_cnn_training(cfg, out_dir, repo_root=REPO_ROOT)
 
-    print(f"Model: {result.model_path}")
-    print(f"Summary: {result.summary_path}")
-    print(f"Val MSE: {result.best_val_mse:.6f}")
-    print(f"Persistence val MSE: {result.persistence_val_mse:.6f}")
-    print(f"Beats persistence: {result.beats_persistence}")
+    log_handler.info("Model: %s", result.model_path)
+    log_handler.info("Summary: %s", result.summary_path)
+    log_handler.info("Val MSE: %.6f", result.best_val_mse)
+    log_handler.info("Persistence val MSE: %.6f", result.persistence_val_mse)
+    log_handler.info("Beats persistence: %s", result.beats_persistence)
 
 
 if __name__ == "__main__":

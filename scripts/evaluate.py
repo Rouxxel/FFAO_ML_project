@@ -26,6 +26,7 @@ from pathlib import Path
 from hydra import compose, initialize_config_dir
 
 # Project imports
+from ffaoml.app_logging import log_handler
 from ffaoml.config import config_dir, run_directory, seed_from_config
 from ffaoml.evaluation.runner import run_baseline_evaluation
 
@@ -78,10 +79,10 @@ def main() -> None:
         out_dir = run_directory(cfg.paths.runs_root, args.run_id)
 
     result = run_baseline_evaluation(cfg, out_dir, repo_root=REPO_ROOT)
-    print(f"Metrics: {result.metrics_path}")
+    log_handler.info("Metrics: %s", result.metrics_path)
     for name, payload in result.metrics["baselines"].items():
         one = payload["one_step"]
-        print(f"  {name} one-step MSE: {one['mse']:.6f}")
+        log_handler.info("  %s one-step MSE: %.6f", name, one["mse"])
 
 
 if __name__ == "__main__":

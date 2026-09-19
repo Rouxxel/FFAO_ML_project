@@ -25,6 +25,7 @@ from pathlib import Path
 from hydra import compose, initialize_config_dir
 
 # Project imports
+from ffaoml.app_logging import log_handler
 from ffaoml.config import config_dir
 from ffaoml.validation.stage1_zenodo import run_stage1_validation
 
@@ -66,12 +67,13 @@ def main() -> None:
         fps=args.fps,
         max_animation_frames=args.max_frames,
     )
-    print(f"Summary: {result.summary_md}")
-    print(f"Metrics: {result.metrics_json}")
+    log_handler.info("Summary: %s", result.summary_md)
+    log_handler.info("Metrics: %s", result.metrics_json)
     if result.strouhal_number is not None:
-        print(
-            f"St ≈ {result.strouhal_number:.4f} "
-            f"(f ≈ {result.dominant_frequency_hz:.4f} Hz)"
+        log_handler.info(
+            "St ≈ %.4f (f ≈ %.4f Hz)",
+            result.strouhal_number,
+            result.dominant_frequency_hz,
         )
 
 

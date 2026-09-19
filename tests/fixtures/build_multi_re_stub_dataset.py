@@ -14,6 +14,7 @@ Generate several stub CFD simulations under one dataset root (Stage 3 layout).
 from pathlib import Path
 
 # Project imports
+from ffaoml.app_logging import log_handler
 from ffaoml.cfd.stub_backend import StubSolver
 from ffaoml.cfd.types import SimulationCase
 from ffaoml.contracts import METADATA_CSV_COLUMNS
@@ -77,4 +78,4 @@ def build_multi_re_stub_dataset(
 if __name__ == "__main__":
     out = Path(__file__).resolve().parent / "multi_re_stub_dataset"
     build_multi_re_stub_dataset(out)
-    print(f"Wrote stub multi-Re dataset under {out}")
+    log_handler.info("Wrote stub multi-Re dataset under %s", out)

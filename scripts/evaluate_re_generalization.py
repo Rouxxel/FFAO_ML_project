@@ -23,6 +23,7 @@ import argparse
 from pathlib import Path
 
 # Project imports
+from ffaoml.app_logging import log_handler
 from ffaoml.evaluation.re_generalization import run_re_generalization_evaluation
 
 """CLI-----------------------------------------------------------"""
@@ -55,8 +56,8 @@ def main() -> None:
         args.run_dir,
         eval_split=args.temporal_split,
     )
-    print(f"Metrics: {result.metrics_path}")
-    print(f"Heatmap: {result.heatmap_path}")
+    log_handler.info("Metrics: %s", result.metrics_path)
+    log_handler.info("Heatmap: %s", result.heatmap_path)
 
 
 if __name__ == "__main__":

@@ -27,10 +27,10 @@ Examples::
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
 # Project imports
+from ffaoml.app_logging import log_handler, shutdown_logger
 from ffaoml.pipeline.stage1 import (
     PHASE_ORDER,
     PipelinePhase,
@@ -90,8 +90,8 @@ Install first: pip install -e ".[core,dev,ml]"
 
 
 def print_usage_guide() -> None:
-    """Print a short catalog of valid invocations when no action flag is set."""
-    print(_USAGE_GUIDE, file=sys.stderr)
+    """Log a short catalog of valid invocations when no action flag is set."""
+    log_handler.warning("%s", _USAGE_GUIDE.strip())
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -241,7 +241,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         results = run_stage1_pipeline(opts, only=only, start_from=start_from)
     except PrerequisiteError as exc:
-        print(str(exc), file=sys.stderr)
+        log_handler.error("%s", exc)
         return 1
 
     print_summary(results)
@@ -249,4 +249,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    finally:
+        shutdown_logger()

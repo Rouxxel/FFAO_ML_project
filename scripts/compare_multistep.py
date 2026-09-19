@@ -24,6 +24,7 @@ import argparse
 from pathlib import Path
 
 # Project imports
+from ffaoml.app_logging import log_handler
 from ffaoml.evaluation.multistep_compare import run_multistep_comparison
 
 """CLI-----------------------------------------------------------"""
@@ -70,9 +71,9 @@ def main() -> None:
         output_dir=args.output_dir,
         split=args.split,
     )
-    print(f"Metrics: {result.metrics_path}")
+    log_handler.info("Metrics: %s", result.metrics_path)
     if result.horizon_figure is not None:
-        print(f"Figure: {result.horizon_figure}")
+        log_handler.info("Figure: %s", result.horizon_figure)
 
 
 if __name__ == "__main__":

@@ -39,6 +39,7 @@ from ffaoml.evaluation.runner import run_baseline_evaluation
 from ffaoml.manifests import dataset_manifest_path
 from ffaoml.training.train import run_cnn_training
 from ffaoml.training.train_convlstm import run_convlstm_training
+from ffaoml.app_logging import log_handler
 from ffaoml.validation.stage1_zenodo import run_stage1_validation
 
 """CONSTANTS-----------------------------------------------------------"""
@@ -247,9 +248,9 @@ def _confirm_rerun(
     if confirm_fn is not None:
         answer = confirm_fn(message)
     elif not sys.stdin.isatty():
-        print(
-            f"[SKIP] {phase.value} (outputs exist; use --force to re-run).",
-            flush=True,
+        log_handler.info(
+            "[SKIP] %s (outputs exist; use --force to re-run).",
+            phase.value,
         )
         return False
     else:
@@ -381,10 +382,10 @@ def run_stage1_pipeline(
             phase, force=opts.force, confirm_fn=confirm_fn
         ):
             results["skipped_phases"].append(phase.value)
-            print(f"\n=== [{phase.value}] skipped ===", flush=True)
+            log_handler.info("=== [%s] skipped ===", phase.value)
             continue
 
-        print(f"\n=== [{phase.value}] starting ===", flush=True)
+        log_handler.info("=== [%s] starting ===", phase.value)
         started = time.perf_counter()
         phase_result = _run_phase(phase, cfg, opts)
         elapsed = time.perf_counter() - started
@@ -392,7 +393,7 @@ def run_stage1_pipeline(
             "elapsed_seconds": round(elapsed, 1),
             "result": _summarize_result(phase_result),
         }
-        print(f"=== [{phase.value}] done ({elapsed:.1f}s) ===", flush=True)
+        log_handler.info("=== [%s] done (%.1fs) ===", phase.value, elapsed)
 
     return results
 
@@ -413,5 +414,5 @@ def _summarize_result(result: Any) -> Any:
 
 
 def print_summary(results: dict[str, Any]) -> None:
-    """Pretty-print the pipeline summary JSON."""
-    print(json.dumps(results, indent=2, default=str))
+    """Log the pipeline summary JSON."""
+    log_handler.info("%s", json.dumps(results, indent=2, default=str))

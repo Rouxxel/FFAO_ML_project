@@ -21,6 +21,7 @@ import argparse
 from pathlib import Path
 
 # Project imports
+from ffaoml.app_logging import log_handler
 from ffaoml.evaluation.model_report import run_model_evaluation
 
 """CLI-----------------------------------------------------------"""
@@ -48,8 +49,8 @@ def main() -> None:
     args = parser.parse_args()
 
     result = run_model_evaluation(args.run_dir, split=args.split)
-    print(f"Figures: {result.figures_dir}")
-    print(f"Metrics: {result.metrics_path}")
+    log_handler.info("Figures: %s", result.figures_dir)
+    log_handler.info("Metrics: %s", result.metrics_path)
 
 
 if __name__ == "__main__":
