@@ -73,6 +73,9 @@ def build_flow_cnn(cfg: DictConfig) -> FlowCNN:
     """
     Construct a CNN from Hydra ``model`` config.
 
+    When ``model.condition_on_re`` is true, one extra input channel is allocated
+    for the broadcast Reynolds map (see ``ffaoml.ml.conditioning``).
+
     Parameters:
         cfg (DictConfig): Composed config with ``model`` group.
 
@@ -80,8 +83,11 @@ def build_flow_cnn(cfg: DictConfig) -> FlowCNN:
         FlowCNN: Initialized module (not on device yet).
     """
     model = cfg.model
+    in_channels = int(model.in_channels)
+    if bool(model.get("condition_on_re", False)):
+        in_channels += 1
     return FlowCNN(
-        in_channels=int(model.in_channels),
+        in_channels=in_channels,
         out_channels=int(model.out_channels),
         hidden_channels=int(model.hidden_channels),
         kernel_size=int(model.kernel_size),
