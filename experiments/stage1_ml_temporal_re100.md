@@ -11,7 +11,7 @@ on the held-out **time block** and exposing **long-horizon drift** when rolled o
 
 | Item | Value |
 |------|--------|
-| Source | [Zenodo 18669296](https://zenodo.org/records/18669296) (`cylinder_re100_grid64_last100.h5`) |
+| Source | [Zenodo](https://doi.org/10.5281/zenodo.18669296) — Addiucci (2026), CC BY 4.0 (`cylinder_re100_grid64_last100.h5`) |
 | Import | `scripts/download_stage1_zenodo.py` |
 | On-disk id | `re_100_zenodo` (`configs/dataset/stage1_zenodo.yaml`) |
 | Splits | Contiguous time indices: train `[0,70)`, val `[70,85)`, test `[85,100)` |

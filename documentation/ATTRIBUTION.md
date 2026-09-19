@@ -103,21 +103,44 @@ Third-party **dependencies** (PyTorch, Dedalus, etc.) remain under their own lic
 Stage 1 imports use the physics-constrained autoencoder Zenodo release and related
 HDF5 asset documented in [DATA_SOURCES.md](./DATA_SOURCES.md).
 
-| Resource | Citation target |
-|----------|-----------------|
-| Dataset record | https://zenodo.org/records/18669296 |
+| Field | Value |
+|-------|--------|
+| Title | Physics-Constrained Convolutional Autoencoders for 2D Cylinder Flow at Re=100 (Version 1.0) |
+| Author | Luca Addiucci |
+| Year | 2026 |
+| DOI | [10.5281/zenodo.18669296](https://doi.org/10.5281/zenodo.18669296) |
+| Record | https://zenodo.org/records/18669296 |
+| License | [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/) (CC BY 4.0) |
+| Copyright | Copyright © 2026 Luca Addiucci |
 | Related code | https://github.com/LucaAddiucci/Physics-Constrained-Convolutional-Autoencoders |
 
 **Recommended credit** when you train on or redistribute imported Zarr derived from
 that HDF5 (in addition to this repository):
 
 ```text
-Flow field data from the Zenodo release at https://zenodo.org/records/18669296
-(Physics-Constrained Convolutional Autoencoders for Fluid Flows), imported via the
-FFAO ML Project Stage 1 pipeline; see dataset/manifest.json for import config hash.
+Flow field data from Addiucci, L. (2026). Physics-Constrained Convolutional
+Autoencoders for 2D Cylinder Flow at Re=100 (Version 1.0) [Dataset]. Zenodo.
+https://doi.org/10.5281/zenodo.18669296 (CC BY 4.0). Imported via the FFAO ML
+Project Stage 1 pipeline; see dataset/manifest.json for import config hash.
 ```
 
-Respect the **upstream license** on the Zenodo record and HDF5 in addition to this
+**BibTeX (upstream dataset):**
+
+```bibtex
+@dataset{addiucci2026pocae_re100,
+  author       = {Addiucci, Luca},
+  title        = {Physics-Constrained Convolutional Autoencoders for 2D Cylinder Flow at Re=100},
+  version      = {1.0},
+  year         = {2026},
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.18669296},
+  url          = {https://doi.org/10.5281/zenodo.18669296},
+  license      = {CC-BY-4.0},
+  copyright    = {Copyright 2026 Luca Addiucci},
+}
+```
+
+Respect the **upstream CC BY 4.0** terms and copyright notice in addition to this
 project’s [LICENSE-DATA](../LICENSE-DATA) for artifacts you publish from `dataset/`
 or `results/`.
 

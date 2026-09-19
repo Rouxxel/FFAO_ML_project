@@ -7,7 +7,8 @@
 ### @date 2026
 #############################################################################
 
-Download upstream flow data from Zenodo record **18669296** (or a local cache),
+Download upstream flow data from Zenodo record **18669296** (DOI 10.5281/zenodo.18669296;
+CC BY 4.0, Copyright 2026 Luca Addiucci) or a local cache,
 parse HDF5 / NumPy / MATLAB archives, and export ``dataset/simulations/re_100_zenodo/``
 plus ``metadata.csv`` and ``manifest.json``.
 
@@ -664,6 +665,8 @@ def import_stage1_from_config(
         writer.writeheader()
         writer.writerow({col: metadata_row[col] for col in METADATA_CSV_COLUMNS})
 
+    doi = dataset.get("source_doi")
+    doi_note = f" Upstream DOI: {doi}." if doi else ""
     manifest = build_dataset_manifest(
         stage=int(dataset.stage),
         source_id=str(dataset.source_id),
@@ -672,7 +675,7 @@ def import_stage1_from_config(
         repo_root=repo_root,
         notes=(
             f"Imported from {upstream_path.name}; "
-            f"~{upstream_path.stat().st_size} bytes upstream. "
+            f"~{upstream_path.stat().st_size} bytes upstream.{doi_note} "
             "Temporal ML splits come from dataset.temporal_split in config."
         ),
     )

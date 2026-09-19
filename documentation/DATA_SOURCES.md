@@ -40,9 +40,9 @@ with `dataset/manifest.json` recording `stage`, `source_id`, and download proven
 
 | Stage | Purpose | Storage (order of magnitude) | Status |
 |-------|---------|------------------------------|--------|
-| **1** | End-to-end pipeline; temporal evolution at **Re ≈ 100** | ~1 MB | **Active** |
-| **2** | Unstructured mesh; MeshGraphNet-style models | Multi-GB TFRecords | Deferred |
-| **3** | Generalization across physical conditions (CFDBench) | ~13.4 GB interpolated | Deferred |
+| **1** | End-to-end pipeline; temporal evolution at **Re ≈ 100** | ~1 MB | **Active** — import + validation implemented |
+| **2** | Unstructured mesh; MeshGraphNet-style models | Multi-GB TFRecords | Deferred (no adapter yet) |
+| **3** | Generalization across physical conditions (CFDBench) | ~13.4 GB interpolated | Deferred (no adapter yet) |
 
 **Stage 1 first research question:** Can a model learn the **temporal evolution**
 of vortex shedding (e.g. flow(t) → flow(t+Δt), rolled out to t+50)?
@@ -59,13 +59,36 @@ Classic 2D cylinder wake at **Re = 100**. The Zenodo PO-CAE release documents
 structured grid with velocity components (and optional vorticity channel). Suitable
 for CNN / ConvLSTM on regular grids.
 
-**Import adapter:** `src/ffaoml/data/sources/zenodo_re100.py`  
-**CLI:** `python scripts/download_stage1_zenodo.py`
+**Import adapter:** `src/ffaoml/data/sources/zenodo_re100.py`
+
+**How to import (pick one):**
+
+| Entry | Command |
+|-------|---------|
+| Script | `python scripts/download_stage1_zenodo.py` |
+| Pipeline | `python main.py --run --only import` |
+| Pipeline + local HDF5 | `python main.py --run --local-file path/to/cylinder_re100_grid64_last100.h5` |
+
+Hydra dataset config: `configs/dataset/stage1_zenodo.yaml`. After import, CFD
+validation: `python scripts/validate_stage1_zenodo.py` or
+`python main.py --run --from cfd_validation` (with import already done).
 
 | Resource | URL |
 |----------|-----|
 | Zenodo dataset (physics-constrained autoencoders release) | https://zenodo.org/records/18669296 |
+| DOI | https://doi.org/10.5281/zenodo.18669296 |
 | Related code (Physics-Constrained Convolutional Autoencoders) | https://github.com/LucaAddiucci/Physics-Constrained-Convolutional-Autoencoders |
+
+**Rights (upstream deposit):** Creative Commons Attribution 4.0 International
+(CC BY 4.0). **Copyright © 2026 Luca Addiucci.**
+
+**Citation:**
+
+> Addiucci, L. (2026). *Physics-Constrained Convolutional Autoencoders for 2D
+> Cylinder Flow at Re=100* (Version 1.0) [Dataset]. Zenodo.
+> https://doi.org/10.5281/zenodo.18669296
+
+Full BibTeX and credit lines: [ATTRIBUTION.md](./ATTRIBUTION.md#stage-1--zenodo-re--100-flow-fields).
 
 **Project config:** `configs/dataset/stage1_zenodo.yaml`  
 **On-disk target:** `dataset/simulations/re_100_zenodo/` (+ `metadata.csv` row,
@@ -74,11 +97,13 @@ place it under `.cache/zenodo_stage1/` or pass `--local-file` to the import scri
 
 **Splits:** Use **time-based** train/val/test within the trajectory — not the
 multi-Re lists in `configs/dataset/splits.yaml` (those apply to Stage 3 / own
-multi-Re CFD).
+multi-Re CFD). ML Re-conditioning (`model=cnn_re`, `dataset=splits`) needs
+**multiple** `metadata.csv` rows (own CFD or future Stage 3); Stage 1 alone is
+single-Re temporal learning only.
 
-**Attribution:** Cite Zenodo record and upstream authors when publishing figures
-or derivatives; respect upstream license terms in addition to this repo’s
-[LICENSE-DATA](../LICENSE-DATA).
+**Attribution:** Cite the DOI and Addiucci (2026) when publishing figures or
+derivatives; respect **CC BY 4.0** and the upstream copyright in addition to this
+repo’s [LICENSE-DATA](../LICENSE-DATA).
 
 ---
 
@@ -130,8 +155,13 @@ In-house **finite-difference** or **Dedalus** solvers remain valuable for:
 * Matching export channels (`u_x`, `u_y`, `p`, `ω`) exactly
 * Publishing new simulation data under [LICENSE-DATA](../LICENSE-DATA)
 
-Own-CFD generation is **not** required to complete Stage 1. See CFD/data implementation
-checklist for solver vs import tracks.
+Own-CFD generation is **not** required to complete Stage 1. Solver modules under
+`src/ffaoml/cfd/` are mostly **placeholders** today (`stub` writes contract-shaped
+Zarr for tests; `fd` / `dedalus` / OpenFOAM raise or defer). See the CFD/data
+task checklist in the repo root for Track B vs import adapters.
+
+**CI note:** GitHub Actions does **not** download Zenodo or CFDBench; tests use
+`tests/fixtures/` and small synthetic imports.
 
 ---
 

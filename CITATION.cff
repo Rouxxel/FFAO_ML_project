@@ -17,3 +17,15 @@ keywords:
   - cylinder-flow
   - neural-operators
 abstract: "Open research codebase studying whether machine-learning models can learn and predict two-dimensional incompressible flow around a cylinder and generalize across Reynolds numbers."
+references:
+  - type: dataset
+    title: "Physics-Constrained Convolutional Autoencoders for 2D Cylinder Flow at Re=100"
+    version: "1.0"
+    authors:
+      - family-names: Addiucci
+        given-names: Luca
+    year: 2026
+    doi: 10.5281/zenodo.18669296
+    url: "https://doi.org/10.5281/zenodo.18669296"
+    license: CC-BY-4.0
+    notes: "Copyright 2026 Luca Addiucci. Stage 1 flow fields imported via FFAO ML."

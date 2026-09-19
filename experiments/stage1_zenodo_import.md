@@ -22,9 +22,12 @@ names the HDF5 file expected alongside the training scripts.
 
 ## Attribution
 
-- Zenodo: Addiucci, L. (2026). *Physics-Constrained Convolutional Autoencoders for 2D
-  Cylinder Flow at Re=100*. https://zenodo.org/records/18669296 (CC BY 4.0).
-- Related code: https://github.com/LucaAddiucci/Physics-Constrained-Convolutional-Autoencoders
+- **Dataset:** Addiucci, L. (2026). *Physics-Constrained Convolutional Autoencoders
+  for 2D Cylinder Flow at Re=100* (Version 1.0) [Dataset]. Zenodo.
+  https://doi.org/10.5281/zenodo.18669296
+- **License:** Creative Commons Attribution 4.0 International (CC BY 4.0)
+- **Copyright:** Copyright © 2026 Luca Addiucci
+- **Related code:** https://github.com/LucaAddiucci/Physics-Constrained-Convolutional-Autoencoders
 
 See also `documentation/ATTRIBUTION.md` and `LICENSE-DATA`.
 

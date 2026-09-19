@@ -211,6 +211,15 @@ def _phases_to_run(
     return phases[idx:]
 
 
+def _phase_runs_before(
+    phases: list[PipelinePhase], earlier: PipelinePhase, later: PipelinePhase
+) -> bool:
+    """True when *earlier* is scheduled before *later* in the same pipeline run."""
+    if earlier not in phases or later not in phases:
+        return False
+    return phases.index(earlier) < phases.index(later)
+
+
 def _check_prerequisites(
     phases: list[PipelinePhase],
     opts: Stage1PipelineOptions,
@@ -218,30 +227,45 @@ def _check_prerequisites(
 ) -> None:
     runs = opts.repo_root / opts.runs_root
     missing: list[str] = []
+    dataset_phases = (
+        PipelinePhase.CFD_VALIDATION,
+        PipelinePhase.BASELINE_EVAL,
+        PipelinePhase.TRAIN_CNN,
+        PipelinePhase.EVAL_CNN,
+        PipelinePhase.TRAIN_CONVLSTM,
+        PipelinePhase.COMPARE_MULTISTEP,
+        PipelinePhase.TRAIN_FNO,
+        PipelinePhase.EVAL_FNO,
+    )
     for phase in phases:
-        if phase == PipelinePhase.CFD_VALIDATION and not _dataset_import_done(cfg):
-            missing.append("dataset import (manifest + fields.zarr)")
-        if phase in (
-            PipelinePhase.BASELINE_EVAL,
-            PipelinePhase.TRAIN_CNN,
-            PipelinePhase.EVAL_CNN,
-            PipelinePhase.TRAIN_CONVLSTM,
-            PipelinePhase.TRAIN_FNO,
-        ) and not _dataset_import_done(cfg):
-            missing.append("dataset import")
+        if phase in dataset_phases and not _dataset_import_done(cfg):
+            if not _phase_runs_before(phases, PipelinePhase.IMPORT, phase):
+                label = (
+                    "dataset import (manifest + fields.zarr)"
+                    if phase == PipelinePhase.CFD_VALIDATION
+                    else "dataset import"
+                )
+                if label not in missing:
+                    missing.append(label)
         if phase == PipelinePhase.EVAL_CNN and not _run_artifact(
             runs / opts.cnn_run_id, "model.pt"
         ):
-            missing.append(f"CNN run {opts.cnn_run_id}/model.pt")
+            if not _phase_runs_before(phases, PipelinePhase.TRAIN_CNN, phase):
+                missing.append(f"CNN run {opts.cnn_run_id}/model.pt")
         if phase == PipelinePhase.COMPARE_MULTISTEP:
             if not _run_artifact(runs / opts.cnn_run_id, "model.pt"):
-                missing.append(f"CNN run {opts.cnn_run_id}/model.pt")
+                if not _phase_runs_before(phases, PipelinePhase.TRAIN_CNN, phase):
+                    missing.append(f"CNN run {opts.cnn_run_id}/model.pt")
             if not _run_artifact(runs / opts.convlstm_run_id, "model.pt"):
-                missing.append(f"ConvLSTM run {opts.convlstm_run_id}/model.pt")
+                if not _phase_runs_before(
+                    phases, PipelinePhase.TRAIN_CONVLSTM, phase
+                ):
+                    missing.append(f"ConvLSTM run {opts.convlstm_run_id}/model.pt")
         if phase == PipelinePhase.EVAL_FNO and not _run_artifact(
             runs / opts.fno_run_id, "model.pt"
         ):
-            missing.append(f"FNO run {opts.fno_run_id}/model.pt")
+            if not _phase_runs_before(phases, PipelinePhase.TRAIN_FNO, phase):
+                missing.append(f"FNO run {opts.fno_run_id}/model.pt")
     if missing:
         lines = "\n".join(f"  - {item}" for item in missing)
         raise PrerequisiteError(f"Missing prerequisite(s):\n{lines}")

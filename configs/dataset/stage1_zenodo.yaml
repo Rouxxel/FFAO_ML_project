@@ -4,6 +4,11 @@
 stage: 1
 source_id: zenodo_re100
 source_url: https://zenodo.org/records/18669296
+source_doi: 10.5281/zenodo.18669296
+upstream_title: "Physics-Constrained Convolutional Autoencoders for 2D Cylinder Flow at Re=100 (Version 1.0)"
+upstream_author: Luca Addiucci
+upstream_license: CC-BY-4.0
+upstream_copyright: "Copyright 2026 Luca Addiucci"
 zenodo_record: "18669296"
 related_code_url: https://github.com/LucaAddiucci/Physics-Constrained-Convolutional-Autoencoders
 

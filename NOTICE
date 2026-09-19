@@ -52,6 +52,22 @@ For academic work, also cite the project using CITATION.cff (see repository
 root) or the BibTeX entry in documentation/ATTRIBUTION.md.
 
 ================================================================================
+THIRD-PARTY DATASETS (STAGE 1)
+================================================================================
+
+Stage 1 imports may use flow field data from:
+
+  Addiucci, L. (2026). Physics-Constrained Convolutional Autoencoders for 2D
+  Cylinder Flow at Re=100 (Version 1.0) [Dataset]. Zenodo.
+  https://doi.org/10.5281/zenodo.18669296
+
+  License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+  Copyright: Copyright 2026 Luca Addiucci
+
+When you publish figures or derivatives built on that upstream data, cite the DOI
+and comply with the upstream license in addition to this project's LICENSE-DATA.
+
+================================================================================
 THIRD-PARTY COMPONENTS
 ================================================================================
 

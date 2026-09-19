@@ -78,6 +78,10 @@ python scripts/download_stage1_zenodo.py --local-file path/to/cylinder_re100_gri
 This writes `dataset/simulations/re_100_zenodo/fields.zarr`, `dataset/metadata.csv`,
 and `dataset/manifest.json` (see `configs/dataset/stage1_zenodo.yaml`).
 
+**Upstream data credit:** Addiucci, L. (2026). *Physics-Constrained Convolutional
+Autoencoders for 2D Cylinder Flow at Re=100* (Version 1.0) [Dataset]. Zenodo.
+https://doi.org/10.5281/zenodo.18669296 (CC BY 4.0; Copyright © 2026 Luca Addiucci).
+
 More detail: [experiments/stage1_zenodo_import.md](experiments/stage1_zenodo_import.md).
 
 ### 3. CFD validation figures
