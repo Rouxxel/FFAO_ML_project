@@ -44,6 +44,20 @@ Steps: **import** → **CFD validation** → **baseline eval** → **CNN train/e
 optional **ConvLSTM** + multistep compare, **FNO** (`--with-fno`). Use `--only` /
 `--from` on `main.py --run`, or run scripts under `scripts/` for one step at a time.
 
+### Reset local pipeline outputs
+
+To re-test import → train from scratch (pipeline still supports skip-if-done when
+artifacts remain):
+
+```bash
+python scripts/clean_pipeline_artifacts.py --list
+python scripts/clean_pipeline_artifacts.py --preset pipeline --dry-run
+python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
+```
+
+Selective cleanup: `--dataset-generated`, `--dataset-zenodo`, `--runs`,
+`--run stage1_cnn`, `--preset models`, etc.
+
 ## Stage 1 data (Zenodo Re ≈ 100)
 
 Catalog and attribution: [documentation/DATA_SOURCES.md](documentation/DATA_SOURCES.md).  
