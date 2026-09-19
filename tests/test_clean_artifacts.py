@@ -56,6 +56,23 @@ def test_run_id_target() -> None:
     assert paths == [(REPO_ROOT / "results" / "runs" / "stage1_cnn").resolve()]
 
 
+def test_delete_repo_log_dir_shuts_down_logger_before_rmtree(monkeypatch) -> None:
+    fake_root = SCRATCH / "fake_repo"
+    log_dir = fake_root / "log"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    (log_dir / "ffao_ml_2026-01-01.log").write_text("x", encoding="utf-8")
+    calls: list[str] = []
+
+    def _fake_shutdown() -> None:
+        calls.append("shutdown")
+
+    monkeypatch.setattr(_clean, "REPO_ROOT", fake_root)
+    monkeypatch.setattr(_clean, "shutdown_logger", _fake_shutdown)
+    delete_paths([log_dir], dry_run=False)
+    assert calls == ["shutdown"]
+    assert not log_dir.exists()
+
+
 def test_dataset_zenodo_target_in_preset_paths() -> None:
     paths = expand_selection(
         REPO_ROOT,

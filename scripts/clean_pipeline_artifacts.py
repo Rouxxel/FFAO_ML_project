@@ -38,7 +38,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 # Project imports
-from ffaoml.app_logging import log_handler
+from ffaoml.app_logging import log_handler, shutdown_logger
 from ffaoml.data.stage1_layout import (
     DATASET_BASE_NAME,
     generated_dataset_root,
@@ -201,10 +201,30 @@ def list_artifacts(repo_root: Path) -> None:
                 )
 
 
+def _is_repo_log_dir(path: Path) -> bool:
+    """True when *path* is the repo's ``log/`` tree (file handler may be open)."""
+    try:
+        return path.resolve() == (REPO_ROOT / "log").resolve()
+    except OSError:
+        return False
+
+
+def _delete_one_path(path: Path) -> None:
+    """Remove a file or directory; release log handlers before deleting ``log/``."""
+    if path.is_dir():
+        if _is_repo_log_dir(path):
+            shutdown_logger()
+        shutil.rmtree(path)
+    else:
+        path.unlink()
+
+
 def delete_paths(paths: list[Path], *, dry_run: bool) -> list[Path]:
     """Remove directories or files; return paths actually removed."""
     removed: list[Path] = []
-    for path in paths:
+    # Delete log/ last so earlier messages still go to the file handler on Windows.
+    ordered = sorted(paths, key=lambda p: 1 if _is_repo_log_dir(p) else 0)
+    for path in ordered:
         if not path.exists():
             log_handler.info("[skip] not found: %s", path)
             continue
@@ -213,11 +233,12 @@ def delete_paths(paths: list[Path], *, dry_run: bool) -> list[Path]:
             log_handler.info("[dry-run] would delete: %s (%s)", path, size)
             removed.append(path)
             continue
-        if path.is_dir():
-            shutil.rmtree(path)
+        logging_active = bool(log_handler.handlers)
+        _delete_one_path(path)
+        if logging_active and log_handler.handlers:
+            log_handler.info("[deleted] %s", path)
         else:
-            path.unlink()
-        log_handler.info("[deleted] %s", path)
+            print(f"[deleted] {path}", flush=True)
         removed.append(path)
     return removed
 
