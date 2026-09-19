@@ -12,6 +12,11 @@ loss:
   field_mse: true
   divergence_weight: 0.0
 
+# Grid spacing for divergence penalty (PRD §14 Exp. 5); override from simulation attrs.
+physics:
+  dx: 1.0
+  dy: 1.0
+
 # ConvLSTM: unroll_steps > 1 enables truncated multi-step training loss.
 unroll_steps: 1
 teacher_forcing: true
