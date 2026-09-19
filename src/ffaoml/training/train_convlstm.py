@@ -50,6 +50,7 @@ from ffaoml.training.bundle import (
     finalize_training_bundle,
 )
 from ffaoml.training.losses import build_training_loss
+from ffaoml.training.progress import log_training_epoch, log_training_start
 from ffaoml.training.train import MODEL_FILENAME, TRAINING_SUMMARY_FILENAME
 
 """TYPES-----------------------------------------------------------"""
@@ -188,6 +189,13 @@ def run_convlstm_training(
     best_path = out / MODEL_FILENAME
     epochs = int(cfg.train.epochs)
     checkpoint_every = int(cfg.train.checkpoint_every)
+    model_name = str(cfg.model.name)
+    log_training_start(
+        model_name=model_name,
+        epochs=epochs,
+        device=str(device),
+        output_dir=str(out),
+    )
 
     for epoch in range(1, epochs + 1):
         model.train()
@@ -205,7 +213,8 @@ def run_convlstm_training(
             optimizer.step()
 
         val_mse = evaluate_convlstm_mse(model, val_loader, device, loss_fn)
-        if val_mse < best_val:
+        is_best = val_mse < best_val
+        if is_best:
             best_val = val_mse
             torch.save(
                 {
@@ -215,6 +224,14 @@ def run_convlstm_training(
                 },
                 best_path,
             )
+        log_training_epoch(
+            model_name=model_name,
+            epoch=epoch,
+            epochs=epochs,
+            val_mse=val_mse,
+            best_val_mse=best_val,
+            is_best=is_best,
+        )
         if checkpoint_every > 0 and epoch % checkpoint_every == 0:
             torch.save(model.state_dict(), out / f"checkpoint_epoch_{epoch}.pt")
 
