@@ -70,9 +70,7 @@ def run_lbm_re100(
     feq = np.zeros_like(f)
     for i in range(9):
         cu = 3.0 * (cx_lbm[i] * ux0 + cy_lbm[i] * uy0)
-        feq[i] = rho0 * weights[i] * (
-            1.0 + cu + 0.5 * cu**2 - 1.5 * (ux0**2 + uy0**2)
-        )
+        feq[i] = rho0 * weights[i] * (1.0 + cu + 0.5 * cu**2 - 1.5 * (ux0**2 + uy0**2))
     f[:] = feq
     ux0[cylinder_mask] = 0.0
     uy0[cylinder_mask] = 0.0
@@ -96,9 +94,7 @@ def run_lbm_re100(
         for i in range(9):
             cu = 3.0 * (cx_lbm[i] * ux + cy_lbm[i] * uy)
             cu = np.clip(cu, -20.0, 20.0)
-            feq[i] = rho * weights[i] * (
-                1.0 + cu + 0.5 * cu**2 - 1.5 * (ux**2 + uy**2)
-            )
+            feq[i] = rho * weights[i] * (1.0 + cu + 0.5 * cu**2 - 1.5 * (ux**2 + uy**2))
             f[i] = f[i] + omega * (feq[i] - f[i])
 
         for i in range(9):
