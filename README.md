@@ -64,12 +64,28 @@ python -m pip install -r requirements.txt
 
 ### 2. Import into `dataset/`
 
+The [Zenodo record](https://zenodo.org/records/18669296) often ships **code only**
+(no HDF5). The pipeline **auto-fallback** runs an LBM generator when Zenodo/cache
+has no file:
+
 ```bash
-python scripts/download_stage1_zenodo.py
+python main.py --dry-run          # shows import strategy (zenodo vs generate)
+python main.py --run              # import → … (auto fallback → generated_data)
+python main.py --run --generate-data   # force LBM → dataset/generated_data/
+python main.py --run --only generate   # generate + import only
 ```
 
-If the HDF5 is not listed on the [Zenodo record](https://zenodo.org/records/18669296)
-yet, place `cylinder_re100_grid64_last100.h5` under `.cache/zenodo_stage1/` or pass:
+On-disk layout after import:
+
+| Source | Directory |
+|--------|-----------|
+| Zenodo / cache / `--local-file` | `dataset/zenodo_data/` |
+| LBM fallback / `--generate-data` | `dataset/generated_data/` |
+
+Each contains `simulations/re_100_zenodo/fields.zarr`, `metadata.csv`, `manifest.json`.
+Legacy flat `dataset/` is still detected if present.
+
+If you already have an HDF5 (official or third-party), pass it explicitly:
 
 ```bash
 python scripts/download_stage1_zenodo.py --local-file path/to/cylinder_re100_grid64_last100.h5
