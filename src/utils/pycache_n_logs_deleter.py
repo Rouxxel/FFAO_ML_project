@@ -42,7 +42,7 @@ import shutil
 
 # FORCE USER TO SET THE ROOT FOLDER NAME (e.g. "drone_battery_performance_prediction")
 ROOT_FOLDER = "FFAO_ML_project"  # <-- Set this to your project's root folder name (case-insensitive)
-FOLDERS_TO_REMOVE = ["__pycache__", "logs", ".pytest_cache", "build", "dist"]
+FOLDERS_TO_REMOVE = ["__pycache__", "log", "logs", ".pytest_cache", "build", "dist"]
 
 def find_project_root_by_name(start_path: str, target_name: str) -> str:
     """

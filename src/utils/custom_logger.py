@@ -1,98 +1,79 @@
 """
 #############################################################################
-### Custom logger file
+### Custom logger
 ###
 ### @file custom_logger.py
 ### @author Sebastian Russo
 ### @date 2025
 #############################################################################
 
-This module initializes a custom logger to handle log messages for the other modules.
+Project-wide logger: console + daily file under ``<repo>/log/ffao_ml_YYYY-MM-DD.log``.
 """
 
-#Native imports
-import os
+# Native imports
 import logging
 import sys
-import datetime
+from datetime import UTC, datetime
+from pathlib import Path
 
-# --- CONFIGURATION AREA ---
-#Map config string levels to logging module levels
+# --- CONFIGURATION ---
 LOG_LEVELS = {
     "critical": logging.CRITICAL,
     "error": logging.ERROR,
     "warning": logging.WARNING,
     "info": logging.INFO,
     "debug": logging.DEBUG,
-    "notset": logging.NOTSET
+    "notset": logging.NOTSET,
 }
-LOG_FILE_NAME = "log_file_name_should_come_from_a_config_file_in_lower_case"
-LOG_LEVEL_STR = "logging_level_should_come_from_a_config_file_in_lower_case"
-LOG_DIRECTORY = "log_directory_name_should_come_from_a_config_file_in_lower_case"
 
-#Get log level string
+REPO_ROOT = Path(__file__).resolve().parents[2]
+LOG_DIRECTORY = REPO_ROOT / "log"
+LOG_FILE_BASENAME = "ffao_ml"
+LOG_LEVEL_STR = "info"
+
 log_level = LOG_LEVELS.get(LOG_LEVEL_STR.lower(), logging.INFO)
 
-# --- Log basic configuration and formatting ---
-log_handler = logging.getLogger(LOG_FILE_NAME)
-log_handler.setLevel(log_level)
-
-# --- Logger formatter ---
 log_format = logging.Formatter(
     fmt="%(asctime)s %(msecs)03dZ | %(levelname)s | %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-# --- File handler initialization ---
+log_handler = logging.getLogger("ffao_ml")
+log_handler.setLevel(log_level)
+log_handler.propagate = False
+
 file_handler = None
-log_file = None
+log_file: Path | None = None
 
 try:
-    #Create folder
-    log_directory = LOG_DIRECTORY
-    os.makedirs(log_directory, exist_ok=True)
-    
-    #Create log file
-    log_file = os.path.join(
-                        log_directory, 
-                        datetime.datetime.now().strftime(
-                            f"{LOG_FILE_NAME}_%Y-%m-%dT%H-%M-%S.log"))
-    
-    file_handler = logging.FileHandler(log_file)
+    LOG_DIRECTORY.mkdir(parents=True, exist_ok=True)
+    date_stamp = datetime.now(UTC).strftime("%Y-%m-%d")
+    log_file = LOG_DIRECTORY / f"{LOG_FILE_BASENAME}_{date_stamp}.log"
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
     file_handler.setFormatter(log_format)
-except OSError as e:
-    sys.stderr.write(f"ERROR: Failed to create log file at '{log_file}': {e}\n")
-    sys.stderr.write("Continuing with console-only logging.\n")
-    file_handler = None
-except Exception as e:
-    sys.stderr.write(f"ERROR: Unexpected error during log file initialization: {e}\n")
+except OSError as exc:
+    sys.stderr.write(f"ERROR: Failed to create log file under '{LOG_DIRECTORY}': {exc}\n")
     sys.stderr.write("Continuing with console-only logging.\n")
     file_handler = None
 
-#Console handler to logs
 console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setFormatter(log_format)
 
-#Final log handler
-if not log_handler.hasHandlers():
+if not log_handler.handlers:
     if file_handler is not None:
         log_handler.addHandler(file_handler)
     log_handler.addHandler(console_handler)
 
-log_handler.info("Project name backend server starting")
-if log_file:
-    log_handler.warning(f"Current working directory: {os.getcwd()}, Logs are written to "
-                        f"'{log_file}'")
+log_handler.info("FFAO ML logging initialized")
+if log_file is not None:
+    log_handler.info("Log file: %s (cwd: %s)", log_file, Path.cwd())
 else:
-    log_handler.warning(f"Current working directory: {os.getcwd()}, File logging "
-                        f"unavailable - console only")
+    log_handler.warning("File logging unavailable — console only (cwd: %s)", Path.cwd())
 
-# --- Shutdown function ---
-def shutdown_logger():
+
+def shutdown_logger() -> None:
     """
-    Properly closes and flushes all log handlers.
-    Call this before application exit to ensure all logs are written.
-    (Optional: Python's garbage collection will handle it, but explicit is better.)
+    Flush and close all handlers (call before process exit when convenient).
     """
     try:
         for handler in log_handler.handlers[:]:
@@ -100,21 +81,7 @@ def shutdown_logger():
                 handler.flush()
                 handler.close()
                 log_handler.removeHandler(handler)
-            except Exception as e:
-                sys.stderr.write(f"Error closing log handler: {e}\n")
-    except Exception as e:
-        sys.stderr.write(f"Error during logger shutdown: {e}\n")
-
-#Example usage
-"""
-from src.utils.custom_logger import log_handler
-
-log_handler.debug("Debug message")
-log_handler.info("Info message")
-log_handler.warning("Warning message")
-log_handler.error("Error message")
-log_handler.critical("Critical message")
-
-# Call before program exit (optional):
-# shutdown_logger()
-"""
+            except OSError as exc:
+                sys.stderr.write(f"Error closing log handler: {exc}\n")
+    except OSError as exc:
+        sys.stderr.write(f"Error during logger shutdown: {exc}\n")
