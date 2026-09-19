@@ -26,7 +26,7 @@ Dataset stages and URLs: [documentation/DATA_SOURCES.md](documentation/DATA_SOUR
 
 ## One-command pipeline (`main.py`)
 
-From the repo root (after `pip install -e ".[core,dev,ml]"`):
+From the repo root (after `pip install -r requirements.txt` or `pip install -e ".[core,dev,ml]"`):
 
 ```bash
 python main.py --dry-run          # preview only — does not train or download
@@ -56,9 +56,10 @@ python -m venv .venv
 # Windows: .venv\Scripts\activate
 # Linux/macOS: source .venv/bin/activate
 python -m pip install -U pip
-python -m pip install -e ".[core,dev]"
-# Optional for DataLoader smoke tests and training:
-python -m pip install -e ".[ml]"
+# Full stack (core + dev + ML): see also requirements.txt
+python -m pip install -r requirements.txt
+# Or minimal CI-style install without PyTorch:
+# python -m pip install -e ".[core,dev]"
 ```
 
 ### 2. Import into `dataset/`

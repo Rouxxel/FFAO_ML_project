@@ -1,0 +1,16 @@
+# FFAO ML — install from repository root (Python >= 3.11)
+#
+# Recommended (editable install; extras defined in pyproject.toml):
+#   pip install -r requirements.txt
+#
+# Equivalent:
+#   pip install -e ".[core,dev,ml]"
+#
+# Other extras (install manually if needed):
+#   pip install -e ".[cfd-dedalus]"   # Dedalus CFD backend
+#   pip install -e ".[track]"         # MLflow experiment tracking
+#
+# CI / lint-only (no PyTorch):
+#   pip install -e ".[core,dev]"
+
+-e .[core,dev,ml]
