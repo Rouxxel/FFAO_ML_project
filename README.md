@@ -146,6 +146,18 @@ python scripts/validate_run_bundle.py --run-dir results/runs/cnn_stage1
 
 End-to-end Stage 1 ML notes: [experiments/stage1_ml_temporal_re100.md](experiments/stage1_ml_temporal_re100.md).
 
+### 10. Multi-Re conditioning (ML Phase 6)
+
+Requires multiple simulations in `dataset/metadata.csv` (own CFD or stub data).
+Use `dataset=splits` and `model=cnn_re`:
+
+```bash
+python scripts/train.py --run-id cnn_multire dataset=splits model=cnn_re --epochs 50
+python scripts/evaluate_re_generalization.py --run-dir results/runs/cnn_multire
+```
+
+See [experiments/stage3_re_generalization.md](experiments/stage3_re_generalization.md).
+
 ## Python package
 
 Import name: **`ffaoml`**, [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) under `src/ffaoml/`. Layout and components:
