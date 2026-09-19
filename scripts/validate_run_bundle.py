@@ -10,9 +10,9 @@
 
 Check required files and print ``bundle_manifest.json`` fields for reproducibility.
 
-Example::
+Example (after ``python main.py --run``; default CNN id is ``stage1_cnn``)::
 
-    python scripts/validate_run_bundle.py --run-dir results/runs/cnn_stage1
+    python scripts/validate_run_bundle.py --run-dir results/runs/stage1_cnn
 """
 
 # Native imports
@@ -45,8 +45,32 @@ def main() -> None:
         help="Training run directory (results/runs/<run_id>).",
     )
     args = parser.parse_args()
-    run_dir = args.run_dir
+    run_dir = args.run_dir.resolve()
+    if not run_dir.is_dir():
+        log_handler.error(
+            "Run directory does not exist: %s\n"
+            "After clean_pipeline_artifacts (or a fresh clone), train first:\n"
+            "  python main.py --run\n"
+            "Default CNN output: results/runs/stage1_cnn/ "
+            "(not configs/config.yaml — that is the Hydra template in git).",
+            run_dir,
+        )
+        raise SystemExit(1)
+    if not any(run_dir.iterdir()):
+        log_handler.error(
+            "Run directory is empty: %s\n"
+            "Re-train or point --run-dir at an existing run under results/runs/.",
+            run_dir,
+        )
+        raise SystemExit(1)
+
     missing = validate_checkpoint_bundle(run_dir)
+    legacy_manifest = run_dir / "manifest.json"
+    if "dataset_manifest.json" in missing and legacy_manifest.is_file():
+        log_handler.warning(
+            "Found legacy run file manifest.json; rename or copy to "
+            "dataset_manifest.json, or re-run train with --force."
+        )
     if missing:
         log_handler.warning("Missing required files: %s", ", ".join(missing))
     else:
