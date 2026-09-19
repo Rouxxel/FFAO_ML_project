@@ -15,7 +15,6 @@ checkpoint bundles.
 from __future__ import annotations
 
 import json
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -32,12 +31,10 @@ except ImportError:  # pragma: no cover
 
 # Project imports
 from ffaoml.config import write_resolved_config
-from ffaoml.data.catalog import dataset_root_from_config
 from ffaoml.data.loading import load_pooled_split_tensor
 from ffaoml.evaluation.rollout import one_step_baseline_metrics
 from ffaoml.manifests import (
-    DATASET_MANIFEST_FILENAME,
-    dataset_manifest_path,
+    RUN_DATASET_MANIFEST_SNAPSHOT_FILENAME,
     git_short_commit,
     hash_config,
     hash_file,
@@ -50,7 +47,10 @@ from ffaoml.ml.preprocessing import (
 )
 from ffaoml.ml.reconstruction import build_reconstruction_datasets
 from ffaoml.models.factory import build_flow_model
-from ffaoml.training.bundle import finalize_training_bundle
+from ffaoml.training.bundle import (
+    copy_dataset_manifest_snapshot,
+    finalize_training_bundle,
+)
 from ffaoml.training.checkpointing import load_model_weights
 from ffaoml.training.losses import build_training_loss
 
@@ -107,13 +107,6 @@ def evaluate_loader_mse(model, loader, device, loss_fn) -> float:
             total += float(loss.item()) * x.size(0)
             count += x.size(0)
     return total / max(count, 1)
-
-
-def _copy_dataset_manifest(cfg: DictConfig, run_dir: Path) -> None:
-    root = dataset_root_from_config(cfg)
-    src = dataset_manifest_path(root)
-    if src.is_file():
-        shutil.copy2(src, run_dir / DATASET_MANIFEST_FILENAME)
 
 
 """TRAINING-----------------------------------------------------------"""
@@ -214,7 +207,9 @@ def run_cnn_training(
         persistence_mse = one_step_baseline_metrics(val_norm, "persistence")["mse"]
         beats = best_val < persistence_mse
 
-    ds_manifest_path = out / DATASET_MANIFEST_FILENAME
+    write_resolved_config(cfg, out)
+    copy_dataset_manifest_snapshot(cfg, out)
+    ds_manifest_path = out / RUN_DATASET_MANIFEST_SNAPSHOT_FILENAME
     dataset_manifest_hash = (
         hash_file(ds_manifest_path) if ds_manifest_path.is_file() else None
     )
@@ -233,8 +228,6 @@ def run_cnn_training(
     summary_path = out / TRAINING_SUMMARY_FILENAME
     summary_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
 
-    write_resolved_config(cfg, out)
-    _copy_dataset_manifest(cfg, out)
     finalize_training_bundle(cfg, out, repo_root=repo_root)
 
     return TrainingResult(
