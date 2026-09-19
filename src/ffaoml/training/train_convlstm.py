@@ -49,7 +49,7 @@ from ffaoml.ml.preprocessing import (
 from ffaoml.models.convlstm import build_flow_convlstm
 from ffaoml.manifests import hash_file
 from ffaoml.training.bundle import finalize_training_bundle
-from ffaoml.training.losses import build_loss_fn
+from ffaoml.training.losses import build_training_loss
 from ffaoml.training.train import MODEL_FILENAME, TRAINING_SUMMARY_FILENAME
 
 """TYPES-----------------------------------------------------------"""
@@ -185,7 +185,7 @@ def run_convlstm_training(
     )
 
     model = build_flow_convlstm(cfg).to(device)
-    loss_fn = build_loss_fn(field_mse=bool(cfg.train.loss.field_mse))
+    loss_fn = build_training_loss(cfg)
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=float(cfg.train.learning_rate),

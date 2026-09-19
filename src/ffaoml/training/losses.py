@@ -13,12 +13,20 @@ Field reconstruction losses for one-step predictors (PRD §14 Exp. 5 hooks).
 # Native imports
 from __future__ import annotations
 
+from collections.abc import Callable
+
+# Third-party imports
+from omegaconf import DictConfig
+
 try:
     import torch
     from torch import nn
 except ImportError:  # pragma: no cover
     torch = None  # type: ignore[assignment]
     nn = None  # type: ignore[assignment,misc]
+
+# Project imports
+from ffaoml.physics.torch_ops import divergence_penalty
 
 """LOSSES-----------------------------------------------------------"""
 
@@ -57,3 +65,31 @@ def build_loss_fn(field_mse: bool = True) -> nn.Module:
     if field_mse:
         return nn.MSELoss()
     raise ValueError("at least one loss term must be enabled")
+
+
+def build_training_loss(cfg: DictConfig) -> Callable[[torch.Tensor, torch.Tensor], torch.Tensor]:
+    """
+    Compose field MSE with optional divergence penalty on predicted velocity.
+
+    Parameters:
+        cfg (DictConfig): Composed config with ``train.loss`` and ``train.physics``.
+
+    Returns:
+        Callable: ``(pred, target) -> scalar`` loss.
+    """
+    _require_torch()
+    use_mse = bool(cfg.train.loss.field_mse)
+    div_weight = float(cfg.train.loss.get("divergence_weight", 0.0))
+    dx = float(cfg.train.physics.dx)
+    dy = float(cfg.train.physics.dy)
+    mse_fn = nn.MSELoss() if use_mse else None
+
+    def _loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if mse_fn is None:
+            raise ValueError("at least one loss term must be enabled")
+        total = mse_fn(pred, target)
+        if div_weight > 0.0:
+            total = total + div_weight * divergence_penalty(pred, dx=dx, dy=dy)
+        return total
+
+    return _loss

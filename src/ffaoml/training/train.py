@@ -43,14 +43,16 @@ from ffaoml.manifests import (
     hash_file,
 )
 from ffaoml.ml.dataset import build_flow_datasets
+from ffaoml.ml.reconstruction import build_reconstruction_datasets
+from ffaoml.models.factory import build_flow_model
 from ffaoml.ml.preprocessing import (
     fit_preprocess_stats,
     normalize_fields,
     save_preprocess_stats,
 )
-from ffaoml.models.cnn import build_flow_cnn
 from ffaoml.training.bundle import finalize_training_bundle
-from ffaoml.training.losses import build_loss_fn
+from ffaoml.training.checkpointing import load_model_weights
+from ffaoml.training.losses import build_training_loss
 
 """CONSTANTS-----------------------------------------------------------"""
 MODEL_FILENAME = "model.pt"
@@ -141,7 +143,11 @@ def run_cnn_training(
     device = torch.device(str(cfg.train.device))
     stats = fit_preprocess_stats(cfg)
     save_preprocess_stats(out / "preprocess_stats.json", stats)
-    datasets = build_flow_datasets(cfg, stats=stats)
+    task = str(cfg.model.get("task", "one_step"))
+    if task == "reconstruction":
+        datasets = build_reconstruction_datasets(cfg, stats=stats)
+    else:
+        datasets = build_flow_datasets(cfg, stats=stats)
 
     train_loader = DataLoader(
         datasets["train"],
@@ -158,8 +164,8 @@ def run_cnn_training(
         collate_fn=_collate_batch,
     )
 
-    model = build_flow_cnn(cfg).to(device)
-    loss_fn = build_loss_fn(field_mse=bool(cfg.train.loss.field_mse))
+    model = build_flow_model(cfg).to(device)
+    loss_fn = build_training_loss(cfg)
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=float(cfg.train.learning_rate),
@@ -197,12 +203,16 @@ def run_cnn_training(
 
     if best_path.is_file():
         checkpoint = torch.load(best_path, map_location=device, weights_only=False)
-        model.load_state_dict(checkpoint["model_state_dict"])
+        load_model_weights(model, checkpoint)
 
-    val_raw = load_pooled_split_tensor(cfg, "val")
-    val_norm = normalize_fields(val_raw, stats)
-    persistence_mse = one_step_baseline_metrics(val_norm, "persistence")["mse"]
-    beats = best_val < persistence_mse
+    if task == "reconstruction":
+        persistence_mse = best_val
+        beats = True
+    else:
+        val_raw = load_pooled_split_tensor(cfg, "val")
+        val_norm = normalize_fields(val_raw, stats)
+        persistence_mse = one_step_baseline_metrics(val_norm, "persistence")["mse"]
+        beats = best_val < persistence_mse
 
     ds_manifest_path = out / DATASET_MANIFEST_FILENAME
     dataset_manifest_hash = (
