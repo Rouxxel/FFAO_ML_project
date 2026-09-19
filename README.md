@@ -34,7 +34,10 @@ python main.py --run --local-file path/to/cylinder_re100_grid64_last100.h5
 python main.py --run --with-convlstm --epochs 80 --force
 ```
 
-Bare `python main.py` prints a usage guide and exits (no work is done). Use **`--run`**
+Runtime logs: **`log/ffao_ml_YYYY-MM-DD.log`** (also echoed to the console). Import via
+``from ffaoml.app_logging import log_handler``.
+
+Bare `python main.py` logs a usage guide and exits (no work is done). Use **`--run`**
 to execute; **`--dry-run`** to list steps without running them.
 
 Steps: **import** → **CFD validation** → **baseline eval** → **CNN train/eval**;
