@@ -159,6 +159,7 @@ python scripts/validate_stage2_meshgraphnets.py
 
 ```bash
 python scripts/train_meshgraphnet.py --run-id stage2_meshgn
+python scripts/evaluate_mesh_model.py --run-dir results/runs/stage2_meshgn
 ```
 
 ---
