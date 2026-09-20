@@ -59,6 +59,34 @@ METADATA_CSV_COLUMNS: Final[tuple[str, ...]] = (
     "seed",
 )
 
+# Optional mesh-trajectory columns (Stage 2); appended in metadata.csv when present.
+MESH_METADATA_OPTIONAL_COLUMNS: Final[tuple[str, ...]] = (
+    "n_nodes",
+    "n_cells",
+)
+
+# Static mesh arrays stored per trajectory (Zarr group or equivalent).
+MESH_STATIC_ARRAYS: Final[tuple[str, ...]] = (
+    "mesh_pos",
+    "node_type",
+    "cells",
+)
+
+# Time-varying node fields (T, N_nodes, …) for MeshGraphNets-style imports.
+MESH_DYNAMIC_NODE_FIELDS: Final[tuple[str, ...]] = (
+    "velocity",
+    "pressure",
+)
+
+# MeshGraphNets node_type integers (documentation/CONTRACTS.md).
+MESH_NODE_TYPE_NORMAL: Final[int] = 0
+MESH_NODE_TYPE_OBSTACLE: Final[int] = 1
+MESH_NODE_TYPE_AIRFOIL: Final[int] = 2
+MESH_NODE_TYPE_HANDLE: Final[int] = 3
+MESH_NODE_TYPE_INFLOW: Final[int] = 4
+MESH_NODE_TYPE_OUTFLOW: Final[int] = 5
+MESH_NODE_TYPE_WALL: Final[int] = 6
+
 """TYPES-----------------------------------------------------------"""
 
 
