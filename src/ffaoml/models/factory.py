@@ -25,6 +25,7 @@ except ImportError:  # pragma: no cover
 from ffaoml.models.cnn import build_flow_cnn
 from ffaoml.models.convlstm import build_flow_convlstm
 from ffaoml.models.fno import build_flow_fno
+from ffaoml.models.meshgraphnet import build_meshgraphnet
 
 """FACTORY-----------------------------------------------------------"""
 
@@ -49,4 +50,6 @@ def build_flow_model(cfg: DictConfig) -> nn.Module:
         return build_flow_fno(cfg)
     if name == "convlstm":
         return build_flow_convlstm(cfg)
+    if name == "meshgraphnet":
+        return build_meshgraphnet(cfg)
     raise ValueError(f"unknown model.name: {name}")
