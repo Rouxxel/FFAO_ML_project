@@ -49,6 +49,7 @@ from ffaoml.data.stage1_layout import (
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 PRESET_PIPELINE = "pipeline"
+PRESET_STAGE2 = "stage2"
 PRESET_MODELS = "models"
 PRESET_ALL = "all"
 
@@ -61,6 +62,12 @@ PRESET_TARGETS: dict[str, tuple[str, ...]] = {
         "logs",
     ),
     PRESET_MODELS: ("runs",),
+    PRESET_STAGE2: (
+        "dataset-meshgraphnets",
+        "cache-meshgraphnets",
+        "cfd-stage2",
+        "runs",
+    ),
     PRESET_ALL: (
         "dataset",
         "cache",
@@ -266,7 +273,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--preset",
         choices=sorted(PRESET_TARGETS),
         help=(
-            "pipeline: dataset+cache+runs+cfd+logs; "
+            "pipeline: Stage 1 dataset+cache+runs+cfd+logs; "
+            "stage2: mesh dataset+cache+cfd-stage2+runs; "
             "models: runs only; all: pipeline+hydra+test-runs"
         ),
     )
