@@ -1,0 +1,16 @@
+# @package model
+
+name: meshgraphnet
+task: one_step_mesh
+
+# Node inputs: velocity (2) + pressure (1) + node_type embedding handled in model code.
+node_in_dim: 3
+node_out_dim: 3
+
+hidden_dim: 128
+num_message_passing_steps: 15
+
+# 1D embedding for MeshGraphNets node_type (0–6).
+node_type_embed_dim: 16
+
+condition_on_re: false
