@@ -144,6 +144,9 @@ example (download + training walkthrough).
 **Project note:** Requires mesh graph data pipeline and GNN models — planned after
 Stage 1 grid-based pipeline is stable.
 
+**Hydra (config skeleton):** `configs/dataset/stage2_meshgraphnets.yaml`,
+`configs/model/meshgraphnet.yaml`; mesh tensor layout in [CONTRACTS.md](./CONTRACTS.md).
+
 ---
 
 ## Stage 3 — CFDBench generalization (deferred)
