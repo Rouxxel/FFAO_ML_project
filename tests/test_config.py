@@ -65,6 +65,26 @@ def test_default_dataset_is_stage1_zenodo(default_config) -> None:
     assert cfg.dataset.temporal_split.train == [0, 70]
 
 
+def test_stage2_meshgraphnets_compose_without_data_on_disk() -> None:
+    GlobalHydra.instance().clear()
+    with initialize_config_dir(
+        config_dir=str(config_dir(REPO_ROOT)),
+        version_base="1.3",
+    ):
+        cfg = compose(
+            config_name="config",
+            overrides=["dataset=stage2_meshgraphnets", "model=meshgraphnet"],
+        )
+    GlobalHydra.instance().clear()
+    assert cfg.dataset.stage == 2
+    assert cfg.dataset.source_id == "meshgraphnets_cylinder_flow"
+    assert cfg.dataset.use_trajectory_splits is True
+    assert cfg.dataset["import"].n_steps == 600
+    assert str(cfg.dataset.output_root).endswith("meshgraphnets_data")
+    assert cfg.model.name == "meshgraphnet"
+    assert cfg.model.num_message_passing_steps == 15
+
+
 def test_re_splits_compose_when_selected() -> None:
     GlobalHydra.instance().clear()
     with initialize_config_dir(
