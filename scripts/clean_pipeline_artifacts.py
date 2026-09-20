@@ -80,7 +80,8 @@ TARGET_HELP: dict[str, str] = {
     "cache": ".cache/ (Zenodo/LBM upstream HDF5)",
     "cache-meshgraphnets": ".cache/meshgraphnets_cylinder only",
     "runs": "results/runs/ (baselines, CNN, ConvLSTM, FNO checkpoints)",
-    "cfd": "results/cfd_validation/ (Stage 1 validation figures)",
+    "cfd": "results/cfd_validation/ (Stage 1 + Stage 2 validation figures)",
+    "cfd-stage2": "results/cfd_validation/stage2_meshgraphnets only",
     "logs": "log/ (application log files)",
     "hydra": "outputs/, multirun/, .hydra/ (local Hydra outputs)",
     "test-runs": ".local_test_runs/ (pytest scratch)",
@@ -118,6 +119,8 @@ def artifact_paths(repo_root: Path, target: str) -> list[Path]:
         return [root / "results" / "runs"]
     if target == "cfd":
         return [root / "results" / "cfd_validation"]
+    if target == "cfd-stage2":
+        return [root / "results" / "cfd_validation" / "stage2_meshgraphnets"]
     if target == "logs":
         return [root / "log"]
     if target == "hydra":
