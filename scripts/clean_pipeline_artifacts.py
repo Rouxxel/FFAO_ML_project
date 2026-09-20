@@ -76,7 +76,9 @@ TARGET_HELP: dict[str, str] = {
     "dataset": "Entire dataset/ tree (zenodo_data, generated_data, legacy layout)",
     "dataset-zenodo": "dataset/zenodo_data only",
     "dataset-generated": "dataset/generated_data only",
+    "dataset-meshgraphnets": "dataset/meshgraphnets_data only",
     "cache": ".cache/ (Zenodo/LBM upstream HDF5)",
+    "cache-meshgraphnets": ".cache/meshgraphnets_cylinder only",
     "runs": "results/runs/ (baselines, CNN, ConvLSTM, FNO checkpoints)",
     "cfd": "results/cfd_validation/ (Stage 1 validation figures)",
     "logs": "log/ (application log files)",
@@ -106,8 +108,12 @@ def artifact_paths(repo_root: Path, target: str) -> list[Path]:
         return [zenodo_dataset_root(root)]
     if target == "dataset-generated":
         return [generated_dataset_root(root)]
+    if target == "dataset-meshgraphnets":
+        return [root / "dataset" / "meshgraphnets_data"]
     if target == "cache":
         return [root / ".cache"]
+    if target == "cache-meshgraphnets":
+        return [root / ".cache" / "meshgraphnets_cylinder"]
     if target == "runs":
         return [root / "results" / "runs"]
     if target == "cfd":

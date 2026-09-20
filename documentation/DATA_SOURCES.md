@@ -147,6 +147,13 @@ Stage 1 grid-based pipeline is stable.
 **Hydra (config skeleton):** `configs/dataset/stage2_meshgraphnets.yaml`,
 `configs/model/meshgraphnet.yaml`; mesh tensor layout in [CONTRACTS.md](./CONTRACTS.md).
 
+**Import (local, requires TensorFlow):**
+
+```bash
+python scripts/download_stage2_meshgraphnets.py --split train --max-trajectories 1
+python scripts/inspect_meshgraphnets_tfrecord.py .cache/meshgraphnets_cylinder/train.tfrecord
+```
+
 ---
 
 ## Stage 3 — CFDBench generalization (deferred)
