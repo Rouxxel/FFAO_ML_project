@@ -17,7 +17,6 @@ See ``documentation/DATA_SOURCES.md`` and ``configs/dataset/stage2_meshgraphnets
 from __future__ import annotations
 
 import json
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -26,6 +25,8 @@ from urllib.request import urlopen
 # Third-party imports
 import numpy as np
 from omegaconf import DictConfig
+
+from ffaoml.app_logging import log_handler
 
 # Project imports
 from ffaoml.data.metadata import (
@@ -66,6 +67,13 @@ class MeshImportResult:
 
 """DOWNLOAD-----------------------------------------------------------"""
 
+_DOWNLOAD_CHUNK_BYTES = 8 * 1024 * 1024
+_DOWNLOAD_LOG_EVERY_BYTES = 32 * 1024 * 1024
+
+
+def _size_mib(path: Path) -> float:
+    return path.stat().st_size / (1024 * 1024)
+
 
 def tfrecord_cache_path(cache_dir: Path, split: str) -> Path:
     """Cached shard path for a split name (train/val/test)."""
@@ -82,9 +90,28 @@ def download_tfrecord(url: str, dest: Path, *, force: bool = False) -> Path:
     """
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.is_file() and dest.stat().st_size > 0 and not force:
+        log_handler.info(
+            "TFRecord cache hit: %s (%.1f MiB)",
+            dest,
+            _size_mib(dest),
+        )
         return dest
+    log_handler.info("Downloading TFRecord → %s", dest)
+    log_handler.info("Source URL: %s", url)
+    downloaded = 0
+    last_logged = 0
     with urlopen(url) as response, dest.open("wb") as handle:
-        shutil.copyfileobj(response, handle)
+        while True:
+            chunk = response.read(_DOWNLOAD_CHUNK_BYTES)
+            if not chunk:
+                break
+            handle.write(chunk)
+            downloaded += len(chunk)
+            if downloaded - last_logged >= _DOWNLOAD_LOG_EVERY_BYTES:
+                mib = downloaded / (1024 * 1024)
+                log_handler.info("Downloaded %.1f MiB so far…", mib)
+                last_logged = downloaded
+    log_handler.info("Download complete: %s (%.1f MiB)", dest, _size_mib(dest))
     return dest
 
 
@@ -185,6 +212,14 @@ def import_tfrecord_shard(
     dt = float(cfg.dataset["import"].dt)
     existing = _existing_sim_ids(dataset_root)
     imported = 0
+    cap_label = str(max_trajectories) if max_trajectories is not None else "all"
+    log_handler.info(
+        "Parsing TFRecord split=%s from %s (max trajectories=%s; "
+        "first record can take a minute while TensorFlow starts)",
+        split,
+        tfrecord_path,
+        cap_label,
+    )
     for offset, arrays in enumerate(
         iter_tfrecord_examples(tfrecord_path, meta, max_examples=max_trajectories)
     ):
@@ -206,6 +241,21 @@ def import_tfrecord_shard(
         append_metadata_row(dataset_root, row)
         existing.add(sim_id)
         imported += 1
+        n_nodes = int(arrays["mesh_pos"].shape[0])
+        n_steps = int(arrays["velocity"].shape[0])
+        log_handler.info(
+            "Imported %s (%d nodes, %d steps) [%d in this shard run]",
+            sim_id,
+            n_nodes,
+            n_steps,
+            imported,
+        )
+    log_handler.info(
+        "Finished split=%s: %d new trajectory(ies) from %s",
+        split,
+        imported,
+        tfrecord_path.name,
+    )
     return imported
 
 
@@ -262,9 +312,25 @@ def run_meshgraphnets_import(
     if cap is not None:
         cap = int(cap)
 
+    cap_msg = (
+        str(cap) if cap is not None else "ALL per shard (full TFRecords; hours + GB)"
+    )
+    log_handler.info(
+        "MeshGraphNets import → %s | splits=%s | max_trajectories_per_split=%s",
+        dataset_root,
+        ",".join(splits),
+        cap_msg,
+    )
+    if cap is None:
+        log_handler.warning(
+            "No trajectory cap: downloading/parsing entire shards. "
+            "For smoke runs use --max-trajectories N on main.py or the download script."
+        )
+
     meta = load_meta(meta_path)
     total = 0
     for split in splits:
+        log_handler.info("=== Mesh import: split %s ===", split)
         shard = resolve_tfrecord_path(cfg, split, force_download=force_download)
         total += import_tfrecord_shard(
             cfg,
@@ -284,6 +350,11 @@ def run_meshgraphnets_import(
         dataset_root,
         repo_root=repo_root,
         notes=note,
+    )
+    log_handler.info(
+        "MeshGraphNets import done: %d trajectory(ies); manifest %s",
+        total,
+        manifest_path,
     )
     return MeshImportResult(
         dataset_root=dataset_root,

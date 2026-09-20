@@ -243,6 +243,12 @@ def _run_phase(
 ) -> Any:
     runs_root = opts.repo_root / opts.runs_root
     if phase == Stage2PipelinePhase.IMPORT:
+        cap = opts.max_trajectories_per_split
+        log_handler.info(
+            "Stage 2 import (TensorFlow required): splits=%s max_per_split=%s",
+            ",".join(opts.import_splits),
+            cap if cap is not None else "unlimited",
+        )
         return run_meshgraphnets_import(
             cfg,
             splits=opts.import_splits,
