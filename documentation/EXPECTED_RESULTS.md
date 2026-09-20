@@ -176,6 +176,41 @@ After `python main.py --run` on 2026-09-19, these paths were present:
 
 ---
 
+## Stage 2 (MeshGraphNets) — expected layout
+
+After `python scripts/run_stage2_pipeline.py --run` (or `python main.py --stage2 --run`):
+
+| Phase | Pass signal |
+|-------|-------------|
+| **import** | `dataset/meshgraphnets_data/manifest.json`, `metadata.csv`, `trajectories/<sim_id>/` |
+| **mesh_validation** | `results/cfd_validation/stage2_meshgraphnets/SUMMARY.md`, `metrics.json` |
+| **train_meshgn** | `results/runs/stage2_meshgn/model.pt`, `training_summary.json`, bundle JSON |
+| **eval_meshgn** | `results/runs/stage2_meshgn/model_eval_metrics.json`, `figures/error_vs_horizon.png` |
+
+```text
+dataset/meshgraphnets_data/
+├── manifest.json
+├── metadata.csv
+└── trajectories/
+    └── cylinder_flow_train_00000/
+        ├── mesh_pos.npy, cells.npy, node_type.npy
+        ├── velocity.npy, pressure.npy, meta.json
+results/cfd_validation/stage2_meshgraphnets/
+results/runs/stage2_meshgn/
+    ├── model.pt, config.yaml, preprocess_stats.json
+    ├── dataset_manifest.json, bundle_manifest.json
+    ├── model_eval_metrics.json
+    └── figures/
+        ├── error_vs_horizon.png
+        └── rollout_stability.png
+.cache/meshgraphnets_cylinder/   # TFRecord shards (optional keep)
+```
+
+Mesh metrics are **not** directly comparable to Stage 1 grid CNN/FNO numbers without
+interpolation; see `note_stage1_comparison` in `model_eval_metrics.json`.
+
+---
+
 ## Quick checks
 
 ```bash
@@ -183,5 +218,7 @@ python scripts/validate_run_bundle.py --run-dir results/runs/stage1_cnn
 python scripts/clean_pipeline_artifacts.py --list    # sizes and presence
 ```
 
-Re-run from scratch: `python scripts/clean_pipeline_artifacts.py --preset pipeline --yes`
+Re-run Stage 1 from scratch: `python scripts/clean_pipeline_artifacts.py --preset pipeline --yes`
 then `python main.py --run`.
+
+Re-run Stage 2: `--preset stage2` (mesh dataset, mesh cache, stage2 CFD figures, all runs).

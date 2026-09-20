@@ -42,8 +42,8 @@ FFAO_ML_project/
 │   │   ├── data/               # I/O, catalog, Zenodo/LBM import, Zarr layout
 │   │   ├── evaluation/         # Baselines, metrics, rollout, plots
 │   │   ├── ml/                 # FlowDataset, preprocessing, splits
-│   │   ├── models/             # CNN, ConvLSTM, FNO
-│   │   ├── pipeline/           # stage1.py orchestration (used by main.py)
+│   │   ├── models/             # CNN, ConvLSTM, FNO, MeshGraphNet
+│   │   ├── pipeline/           # stage1.py + stage2.py (used by main.py)
 │   │   ├── physics/            # NS helpers, Reynolds, torch ops
 │   │   ├── training/           # Train loops, losses, checkpoints
 │   │   └── validation/         # Stage 1 CFD validation figures
@@ -52,7 +52,7 @@ FFAO_ML_project/
 │   ├── fixtures/               # Mini HDF5 and dataset builders
 │   └── test_*.py
 ├── .github/workflows/          # CI and security workflows
-├── main.py                     # Stage 1 end-to-end entry point
+├── main.py                     # Stage 1 (default) and Stage 2 (--stage2) entry point
 ├── pyproject.toml
 ├── requirements.txt
 ├── CITATION.cff
@@ -71,6 +71,7 @@ Planning notes at repo root (`CFD_DATA_TASKS.md`, `FOUNDATION_TASKS.md`,
 | Stage 1 import, Zarr layout, validation figures | Ready (scripts below) |
 | ML `FlowDataset` / normalization (Stage 1 temporal splits) | Ready |
 | CNN / ConvLSTM training, baselines, rollout eval | Ready (`ml-stage1-v0.1`) |
+| Stage 2 MeshGraphNets import, mesh validation, train/eval | Ready (see below) |
 
 ## One-command pipeline (`main.py`)
 
@@ -91,6 +92,25 @@ to execute; **`--dry-run`** to list steps without running them.
 Steps: **import** → **CFD validation** → **baseline eval** → **CNN train/eval**;
 optional **ConvLSTM** + multistep compare, **FNO** (`--with-fno`). Use `--only` /
 `--from` on `main.py --run`, or run scripts under `scripts/` for one step at a time.
+
+### Stage 2 pipeline (MeshGraphNets)
+
+Import requires **TensorFlow** for TFRecords; training defaults to **CPU** (use
+`train.device=cuda` or `--device cuda` on the train script for full shards).
+
+```bash
+python main.py --stage2 --dry-run
+python main.py --stage2 --run --max-trajectories 2
+# equivalent Hydra selector:
+python main.py --run dataset=stage2_meshgraphnets --max-trajectories 2
+# dedicated script (same orchestrator):
+python scripts/run_stage2_pipeline.py --run --max-trajectories 2
+```
+
+Phases: **import** → **mesh_validation** → **train_meshgn** → **eval_meshgn**. Runbook:
+[experiments/stage2_meshgraphnets.md](experiments/stage2_meshgraphnets.md).
+
+Reset Stage 2 artifacts: `python scripts/clean_pipeline_artifacts.py --preset stage2 --yes`
 
 ### Reset local pipeline outputs
 
