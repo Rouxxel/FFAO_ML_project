@@ -1,0 +1,21 @@
+# @package train
+# Stage 2 mesh training defaults (CPU-friendly smoke; use GPU for full shard).
+
+batch_size: 1
+learning_rate: 1.0e-3
+epochs: 50
+checkpoint_every: 10
+num_workers: 0
+
+device: cpu
+
+loss:
+  field_mse: true
+  divergence_weight: 0.0
+
+physics:
+  dx: 1.0
+  dy: 1.0
+
+unroll_steps: 1
+teacher_forcing: true
