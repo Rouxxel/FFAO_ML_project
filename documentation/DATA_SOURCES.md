@@ -152,6 +152,13 @@ Stage 1 grid-based pipeline is stable.
 ```bash
 python scripts/download_stage2_meshgraphnets.py --split train --max-trajectories 1
 python scripts/inspect_meshgraphnets_tfrecord.py .cache/meshgraphnets_cylinder/train.tfrecord
+python scripts/validate_stage2_meshgraphnets.py
+```
+
+**Train (CPU smoke by default; use `--device cuda` for the full train shard):**
+
+```bash
+python scripts/train_meshgraphnet.py --run-id stage2_meshgn
 ```
 
 ---
