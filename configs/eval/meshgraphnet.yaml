@@ -1,0 +1,9 @@
+# @package eval
+# Stage 2 mesh rollout evaluation (trajectory-level val split)
+
+split: val
+rollout_horizon: 100
+report_horizons: [1, 10, 50, 100]
+
+baselines:
+  - persistence
