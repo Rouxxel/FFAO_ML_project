@@ -9,8 +9,19 @@
 #############################################################################
 
 Remove generated data under the repo (datasets, training runs, cache, logs) so
-you can re-run ``main.py`` from a clean slate. The pipeline still supports
-skip-if-done; delete only what you need.
+you can re-run ``main.py`` or ``main.py --stage2`` from a clean slate. Pipelines
+still support skip-if-done; delete only what you need.
+
+Presets:
+
+- ``pipeline`` — **Stage 1 and Stage 2** on disk: entire ``dataset/`` (Zenodo,
+  generated, **meshgraphnets**), entire ``.cache/`` (Zenodo/LBM **and** mesh
+  TFRecords), all ``results/runs/``, all ``results/cfd_validation/`` (Stage 1
+  **and** ``stage2_meshgraphnets/``), plus ``log/``.
+- ``stage2`` — Mesh-focused subset: ``dataset-meshgraphnets``, mesh cache,
+  ``cfd-stage2``, and all runs (same ``runs`` target as ``pipeline``).
+- ``models`` — ``results/runs/`` only.
+- ``all`` — ``pipeline`` plus Hydra dirs and ``.local_test_runs/``.
 
 Quick reference::
 
@@ -18,14 +29,19 @@ Quick reference::
     python scripts/clean_pipeline_artifacts.py --list
     python scripts/clean_pipeline_artifacts.py --preset pipeline --dry-run
 
-    # Full pipeline reset (dataset, cache, runs, CFD figures, logs)
+    # Full reset for both stages (see preset list above)
     python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
+
+    # Stage 2 only (still wipes all run folders)
+    python scripts/clean_pipeline_artifacts.py --preset stage2 --yes
 
     # Common partial cleanups (--target repeatable; names from --list)
     python scripts/clean_pipeline_artifacts.py --target dataset-generated --yes
     python scripts/clean_pipeline_artifacts.py --target dataset-zenodo --yes
+    python scripts/clean_pipeline_artifacts.py --target dataset-meshgraphnets --yes
     python scripts/clean_pipeline_artifacts.py --preset models --yes
     python scripts/clean_pipeline_artifacts.py --run stage1_cnn --yes
+    python scripts/clean_pipeline_artifacts.py --run stage2_meshgn --yes
 
     # Nuclear (adds Hydra outputs/ + .local_test_runs/)
     python scripts/clean_pipeline_artifacts.py --preset all --yes
@@ -273,8 +289,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--preset",
         choices=sorted(PRESET_TARGETS),
         help=(
-            "pipeline: Stage 1 dataset+cache+runs+cfd+logs; "
-            "stage2: mesh dataset+cache+cfd-stage2+runs; "
+            "pipeline: full dataset/ + .cache/ + all runs + all cfd_validation "
+            "(Stage 1 and Stage 2) + logs; "
+            "stage2: mesh dataset + mesh cache + cfd-stage2 + all runs; "
             "models: runs only; all: pipeline+hydra+test-runs"
         ),
     )

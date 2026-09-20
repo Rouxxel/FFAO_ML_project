@@ -31,14 +31,31 @@ Quick reference::
     # Optional ConvLSTM / FNO
     python main.py --run --with-convlstm --with-fno --epochs 80 --fno-epochs 50
 
-    # Single phase (--run required)
+    # Single phase — Stage 1 (--run required)
     python main.py --run --only import
     python main.py --run --only generate
     python main.py --run --only train_cnn --epochs 50
     python main.py --run --from train_cnn
 
-    # Clean slate before re-run
+    # Full pipeline — Stage 2 (MeshGraphNets; import needs TensorFlow)
+    python main.py --stage2 --dry-run
+    python main.py --stage2 --run --max-trajectories 2   # recommended first run
+    python main.py --stage2 --run   # full shards (very large; see import logs)
+    python main.py --stage2 --run --max-trajectories 2 --split train --split val
+    python main.py --run dataset=stage2_meshgraphnets --max-trajectories 2
+
+    # Single phase — Stage 2 (--stage2 and --run required)
+    python main.py --stage2 --run --only import --max-trajectories 1
+    python main.py --stage2 --run --only mesh_validation
+    python main.py --stage2 --run --only train_meshgn --epochs 50
+    python main.py --stage2 --run --only eval_meshgn
+    python main.py --stage2 --run --from train_meshgn
+
+    # Same Stage 2 flow: scripts/run_stage2_pipeline.py --run
+
+    # Clean slate (pipeline preset = Stage 1 + Stage 2 on disk)
     python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
+    python scripts/clean_pipeline_artifacts.py --preset stage2 --yes
 """
 
 # Native imports
@@ -121,16 +138,27 @@ Reset local outputs (see scripts/clean_pipeline_artifacts.py docstring)
   python scripts/clean_pipeline_artifacts.py --list
   python scripts/clean_pipeline_artifacts.py --preset pipeline --dry-run
   python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
+  python scripts/clean_pipeline_artifacts.py --preset stage2 --yes
   python scripts/clean_pipeline_artifacts.py --target dataset-generated --yes
 
-Stage 2 (MeshGraphNets cylinder_flow)
+Stage 2 (MeshGraphNets cylinder_flow; use --stage2 or dataset=stage2_meshgraphnets)
 --------------------------------------------------------------------------------
   python main.py --stage2 --dry-run
-  python main.py --stage2 --run --max-trajectories 2
-  python main.py --run dataset=stage2_meshgraphnets --max-trajectories 1
-  python scripts/run_stage2_pipeline.py --run   # same orchestrator, dedicated CLI
+  python main.py --stage2 --run
+  python main.py --stage2 --run --max-trajectories 2 --split train --split val
+  python main.py --run dataset=stage2_meshgraphnets --max-trajectories 2
+  python main.py --stage2 --run --only import --max-trajectories 1
+  python main.py --stage2 --run --only mesh_validation
+  python main.py --stage2 --run --only train_meshgn --epochs 50
+  python main.py --stage2 --run --only eval_meshgn
+  python main.py --stage2 --run --from train_meshgn
+  python scripts/run_stage2_pipeline.py --run
+  python scripts/download_stage2_meshgraphnets.py --split train --max-trajectories 1
+  python scripts/train_meshgraphnet.py --run-id stage2_meshgn
+  python scripts/evaluate_mesh_model.py --run-dir results/runs/stage2_meshgn
 
 Phases: import, mesh_validation, train_meshgn, eval_meshgn
+Import needs TensorFlow; training defaults to CPU (override train.device=cuda).
 
 Install first: pip install -e ".[core,dev,ml]"
 ================================================================================
