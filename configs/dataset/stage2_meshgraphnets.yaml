@@ -1,0 +1,43 @@
+# @package dataset
+# Stage 2 — DeepMind MeshGraphNets cylinder_flow (see documentation/DATA_SOURCES.md)
+
+stage: 2
+source_id: meshgraphnets_cylinder_flow
+source_url: https://github.com/google-deepmind/deepmind-research/tree/master/meshgraphnets
+
+output_root: ${paths.dataset_root}/meshgraphnets_data
+trajectory_store_name: graph.zarr
+
+re: 0  # upstream cylinder_flow is not a multi-Re benchmark; use 0 in metadata when unused
+
+import:
+  cache_dir: .cache/meshgraphnets_cylinder
+  dt: 0.01
+  n_steps: 600
+  tfrecord_urls:
+    train: https://storage.googleapis.com/dm-meshgraphnets/cylinder_flow/train.tfrecord
+    val: https://storage.googleapis.com/dm-meshgraphnets/cylinder_flow/valid.tfrecord
+    test: https://storage.googleapis.com/dm-meshgraphnets/cylinder_flow/test.tfrecord
+  # Dev imports: cap trajectories per split (null = all in shard).
+  max_trajectories_per_split: null
+
+# Trajectory-level splits come from metadata.csv ``split`` (train/val/test),
+# aligned with upstream TFRecord shards — not Stage 1 time blocks.
+use_re_splits: false
+use_trajectory_splits: true
+
+temporal_split:
+  strategy: full_trajectory
+  train: [0, 600]
+  val: [0, 600]
+  test: [0, 600]
+
+normalization:
+  fit_split: train
+  per_field: true
+  fields:
+    - velocity
+    - pressure
+
+prediction:
+  delta_steps: 1
