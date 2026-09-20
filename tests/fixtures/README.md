@@ -13,3 +13,14 @@ python -c "from pathlib import Path; import runpy; runpy.run_path('tests/fixture
 ```
 
 Or run `tests/fixtures/build_stage1_mini.py` if present.
+
+## `meshgraphnets_mini/`
+
+Synthetic mesh trajectory (24 nodes, 8 timesteps) for Stage 2 mesh I/O tests without
+downloading MeshGraphNets TFRecords.
+
+Regenerate:
+
+```bash
+python tests/fixtures/build_meshgraphnets_mini.py
+```
