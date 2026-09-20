@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """
 #############################################################################
-### FFAO ML — Stage 1 end-to-end pipeline
+### FFAO ML — Stage 1 / Stage 2 end-to-end pipeline
 ###
 ### @file main.py
 ### @author Sebastian Russo
 ### @date 2026
 #############################################################################
 
-Run import → CFD validation → baselines → CNN train/eval (optional ConvLSTM, FNO).
+Stage 1 (default): import → CFD validation → baselines → CNN train/eval.
+Stage 2: ``--stage2`` or ``dataset=stage2_meshgraphnets`` → mesh import → validate →
+MeshGraphNet train/eval.
 
 Required:
 pip install -e ".[core,dev,ml]"
 
-``python main.py`` alone does **not** run anything — you must pass ``--run`` or ``--dry-run``.
+``python main.py`` alone does **not** run anything — pass ``--run`` or ``--dry-run``.
 
 Quick reference::
 
@@ -48,12 +50,17 @@ from pathlib import Path
 # Project imports
 from ffaoml.app_logging import log_handler, shutdown_logger
 from ffaoml.pipeline.stage1 import (
-    PHASE_ORDER,
     PipelinePhase,
     PrerequisiteError,
     Stage1PipelineOptions,
     print_summary,
     run_stage1_pipeline,
+)
+from ffaoml.pipeline.stage2 import (
+    Stage2PipelineOptions,
+    Stage2PipelinePhase,
+    hydra_overrides_select_stage2,
+    run_stage2_pipeline,
 )
 
 """CONSTANTS-----------------------------------------------------------"""
@@ -116,6 +123,15 @@ Reset local outputs (see scripts/clean_pipeline_artifacts.py docstring)
   python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
   python scripts/clean_pipeline_artifacts.py --target dataset-generated --yes
 
+Stage 2 (MeshGraphNets cylinder_flow)
+--------------------------------------------------------------------------------
+  python main.py --stage2 --dry-run
+  python main.py --stage2 --run --max-trajectories 2
+  python main.py --run dataset=stage2_meshgraphnets --max-trajectories 1
+  python scripts/run_stage2_pipeline.py --run   # same orchestrator, dedicated CLI
+
+Phases: import, mesh_validation, train_meshgn, eval_meshgn
+
 Install first: pip install -e ".[core,dev,ml]"
 ================================================================================
 """
@@ -133,9 +149,13 @@ def build_parser() -> argparse.ArgumentParser:
     Returns:
         argparse.ArgumentParser: Configured parser.
     """
-    phase_choices = [p.value for p in PipelinePhase]
     parser = argparse.ArgumentParser(
-        description="FFAO ML Stage 1: data import through training and evaluation.",
+        description="FFAO ML pipeline (Stage 1 default; use --stage2 for mesh).",
+    )
+    parser.add_argument(
+        "--stage2",
+        action="store_true",
+        help="Run Stage 2 MeshGraphNets pipeline instead of Stage 1.",
     )
     parser.add_argument(
         "--run",
@@ -222,15 +242,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="Also train and evaluate an FNO model.",
     )
     parser.add_argument(
+        "--mesh-run-id",
+        default="stage2_meshgn",
+        help="Stage 2 folder under results/runs/.",
+    )
+    parser.add_argument(
+        "--max-trajectories",
+        type=int,
+        default=None,
+        help="Stage 2: cap trajectories per TFRecord split.",
+    )
+    parser.add_argument(
+        "--split",
+        action="append",
+        choices=["train", "val", "test"],
+        dest="import_splits",
+        help="Stage 2: import shard(s); default all three.",
+    )
+    parser.add_argument(
+        "--force-download",
+        action="store_true",
+        help="Stage 2: re-fetch MeshGraphNets TFRecords.",
+    )
+    parser.add_argument(
+        "--skip-mesh-validation",
+        action="store_true",
+        help="Stage 2: skip mesh qualitative validation figures.",
+    )
+    parser.add_argument(
         "--only",
-        choices=phase_choices,
-        help="Run a single pipeline phase.",
+        help="Run a single pipeline phase (see usage guide).",
     )
     parser.add_argument(
         "--from",
         dest="start_from",
-        choices=phase_choices,
-        help="Start at this phase and run it plus all later phases.",
+        help="Start at this phase and run all later phases.",
     )
     parser.add_argument(
         "hydra_overrides",
@@ -240,9 +286,46 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _run_stage2_from_args(
+    parser: argparse.ArgumentParser, args: argparse.Namespace
+) -> int:
+    if args.only and args.start_from:
+        parser.error("Use either --only or --from, not both.")
+    phase_values = {p.value for p in Stage2PipelinePhase}
+    if args.only and args.only not in phase_values:
+        parser.error(
+            f"Unknown Stage 2 phase {args.only!r}; choose from {sorted(phase_values)}"
+        )
+    if args.start_from and args.start_from not in phase_values:
+        choices = ", ".join(sorted(phase_values))
+        parser.error(f"Unknown Stage 2 phase {args.start_from!r}; choose: {choices}")
+    splits = tuple(args.import_splits or ("train", "val", "test"))
+    opts = Stage2PipelineOptions(
+        repo_root=REPO_ROOT,
+        mesh_run_id=args.mesh_run_id,
+        train_epochs=args.epochs,
+        import_splits=splits,
+        max_trajectories_per_split=args.max_trajectories,
+        force_download=args.force_download,
+        skip_mesh_validation=args.skip_mesh_validation,
+        hydra_overrides=list(args.hydra_overrides),
+        force=args.force,
+        dry_run=args.dry_run,
+    )
+    only = Stage2PipelinePhase(args.only) if args.only else None
+    start_from = Stage2PipelinePhase(args.start_from) if args.start_from else None
+    try:
+        results = run_stage2_pipeline(opts, only=only, start_from=start_from)
+    except PrerequisiteError as exc:
+        log_handler.error("%s", exc)
+        return 1
+    print_summary(results)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """
-    CLI entry for the Stage 1 pipeline.
+    CLI entry for Stage 1 (default) or Stage 2 pipelines.
 
     Parameters:
         argv (list[str] | None): Argument vector (defaults to ``sys.argv[1:]``).
@@ -257,8 +340,20 @@ def main(argv: list[str] | None = None) -> int:
         print_usage_guide()
         return 2
 
+    if args.stage2 or hydra_overrides_select_stage2(list(args.hydra_overrides)):
+        return _run_stage2_from_args(parser, args)
+
     if args.only and args.start_from:
         parser.error("Use either --only or --from, not both.")
+
+    phase_values = {p.value for p in PipelinePhase}
+    if args.only and args.only not in phase_values:
+        parser.error(
+            f"Unknown Stage 1 phase {args.only!r}; choose from {sorted(phase_values)}"
+        )
+    if args.start_from and args.start_from not in phase_values:
+        choices = ", ".join(sorted(phase_values))
+        parser.error(f"Unknown Stage 1 phase {args.start_from!r}; choose: {choices}")
 
     opts = Stage1PipelineOptions(
         repo_root=REPO_ROOT,
