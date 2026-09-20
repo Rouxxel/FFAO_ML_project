@@ -108,18 +108,37 @@ def _parse_cylinder_flow_heuristic(
     }
 
 
+def iter_tfrecord_examples(
+    tfrecord_path: str | Path,
+    meta: dict[str, Any],
+    *,
+    max_examples: int | None = None,
+) -> Any:
+    """
+    Yield parsed trajectories from a TFRecord file.
+
+    Parameters:
+        tfrecord_path (str | Path): Shard path.
+        meta (dict[str, Any]): Parsed ``meta.json`` (or built-in template).
+        max_examples (int | None): Stop after this many records (``None`` = all).
+    """
+    tf = _require_tensorflow()
+    dataset = tf.data.TFRecordDataset([str(tfrecord_path)])
+    for index, raw in enumerate(dataset):
+        if max_examples is not None and index >= max_examples:
+            break
+        yield parse_tfrecord_example(bytes(raw.numpy()), meta)
+
+
 def read_first_tfrecord_example(
     tfrecord_path: str | Path,
     *,
     meta_path: str | Path | None = None,
 ) -> dict[str, np.ndarray]:
     """Read and parse the first serialized example from a ``.tfrecord`` file."""
-    tf = _require_tensorflow()
     meta = load_meta(meta_path)
-    path = str(tfrecord_path)
-    dataset = tf.data.TFRecordDataset([path])
-    for raw in dataset.take(1):
-        return parse_tfrecord_example(bytes(raw.numpy()), meta)
+    for arrays in iter_tfrecord_examples(tfrecord_path, meta, max_examples=1):
+        return arrays
     raise ValueError(f"No records in {tfrecord_path}")
 
 
