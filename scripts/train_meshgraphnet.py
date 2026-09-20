@@ -60,6 +60,7 @@ def main() -> None:
         "dataset=stage2_meshgraphnets",
         "model=meshgraphnet",
         "train=meshgraphnet",
+        "eval=meshgraphnet",
     ]
     if args.epochs is not None:
         overrides.append(f"train.epochs={args.epochs}")
