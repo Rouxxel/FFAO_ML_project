@@ -44,5 +44,9 @@ normalization:
 
 import:
   cache_dir: .cache/cfdbench
-  # Phase 2: HF download paths, case filters, max_cases — see import adapter.
+  huggingface_repo: luoyining/CFDBench
+  subsets:
+    - prop
+  dt: 0.1
+  re_tolerance: 2.0
   max_cases: null
