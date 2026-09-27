@@ -47,9 +47,7 @@ def main() -> None:
     np.save(OUTPUT / "pressure.npy", pressure)
     meta = {"dt": 0.01, "n_steps": n_steps, "sim_id": "meshgraphnets_mini"}
     meta_path = OUTPUT / "meta.json"
-    meta_path.write_text(
-        json.dumps(meta, indent=2) + "\n", encoding="utf-8"
-    )
+    meta_path.write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
     total = sum(p.stat().st_size for p in OUTPUT.iterdir() if p.is_file())
     log_handler.info("Wrote %s (%s bytes total)", OUTPUT, total)
 
