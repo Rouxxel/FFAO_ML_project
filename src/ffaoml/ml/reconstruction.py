@@ -1,6 +1,6 @@
 """
 #############################################################################
-### Task A — flow-field reconstruction datasets
+### Task A - flow-field reconstruction datasets
 ###
 ### @file reconstruction.py
 ### @author Sebastian Russo

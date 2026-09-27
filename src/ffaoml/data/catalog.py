@@ -105,6 +105,33 @@ def temporal_index_range(cfg: DictConfig, split: str) -> tuple[int, int]:
 """METADATA-----------------------------------------------------------"""
 
 
+def list_mesh_trajectories_for_split(
+    cfg: DictConfig,
+    split: str,
+) -> list[tuple[str, Path]]:
+    """
+    Return ``(sim_id, trajectory_dir)`` for rows with ``metadata.csv`` split.
+
+    Parameters:
+        cfg (DictConfig): Stage 2 config with ``dataset.output_root``.
+        split (str): ``train``, ``val``, or ``test``.
+
+    Returns:
+        list[tuple[str, Path]]: Trajectory directories that exist on disk.
+    """
+    root = dataset_root_from_config(cfg)
+    out: list[tuple[str, Path]] = []
+    for row in read_metadata_rows(root):
+        if str(row["split"]) != split:
+            continue
+        sim_id = str(row["sim_id"])
+        rel = str(row["path"])
+        traj_dir = (root / rel).resolve()
+        if traj_dir.is_dir():
+            out.append((sim_id, traj_dir))
+    return out
+
+
 def lookup_metadata_row(
     dataset_root: str | Path,
     sim_id: str,

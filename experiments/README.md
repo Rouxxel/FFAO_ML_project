@@ -14,10 +14,10 @@ results/runs/<run_id>/
 
 Typical contents:
 
-- `config.yaml` — resolved Hydra (or equivalent) configuration
-- `checkpoints/` — model weights
-- `metrics.json` or `metrics.jsonl` — scalar evaluation results
-- `figures/` — plots for papers or reports
+- `config.yaml` - resolved Hydra (or equivalent) configuration
+- `checkpoints/` - model weights
+- `metrics.json` or `metrics.jsonl` - scalar evaluation results
+- `figures/` - plots for papers or reports
 
 Hydra multirun sweeps may also create `multirun/` or `outputs/` at the repo
 root during local development; those paths are gitignored.

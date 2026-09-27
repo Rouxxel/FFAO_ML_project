@@ -1,6 +1,6 @@
 """
 #############################################################################
-### Stage 1 — Zenodo Re=100 cylinder import
+### Stage 1 - Zenodo Re=100 cylinder import
 ###
 ### @file zenodo_re100.py
 ### @author Sebastian Russo

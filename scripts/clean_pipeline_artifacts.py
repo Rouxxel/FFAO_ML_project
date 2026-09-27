@@ -9,8 +9,19 @@
 #############################################################################
 
 Remove generated data under the repo (datasets, training runs, cache, logs) so
-you can re-run ``main.py`` from a clean slate. The pipeline still supports
-skip-if-done; delete only what you need.
+you can re-run ``main.py`` or ``main.py --stage2`` from a clean slate. Pipelines
+still support skip-if-done; delete only what you need.
+
+Presets:
+
+- ``pipeline``- **Stage 1 and Stage 2** on disk: entire ``dataset/`` (Zenodo,
+  generated, **meshgraphnets**), entire ``.cache/`` (Zenodo/LBM **and** mesh
+  TFRecords), all ``results/runs/``, all ``results/cfd_validation/`` (Stage 1
+  **and** ``stage2_meshgraphnets/``), plus ``log/``.
+- ``stage2``- Mesh-focused subset: ``dataset-meshgraphnets``, mesh cache,
+  ``cfd-stage2``, and all runs (same ``runs`` target as ``pipeline``).
+- ``models``- ``results/runs/`` only.
+- ``all``- ``pipeline`` plus Hydra dirs and ``.local_test_runs/``.
 
 Quick reference::
 
@@ -18,14 +29,19 @@ Quick reference::
     python scripts/clean_pipeline_artifacts.py --list
     python scripts/clean_pipeline_artifacts.py --preset pipeline --dry-run
 
-    # Full pipeline reset (dataset, cache, runs, CFD figures, logs)
+    # Full reset for both stages (see preset list above)
     python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
+
+    # Stage 2 only (still wipes all run folders)
+    python scripts/clean_pipeline_artifacts.py --preset stage2 --yes
 
     # Common partial cleanups (--target repeatable; names from --list)
     python scripts/clean_pipeline_artifacts.py --target dataset-generated --yes
     python scripts/clean_pipeline_artifacts.py --target dataset-zenodo --yes
+    python scripts/clean_pipeline_artifacts.py --target dataset-meshgraphnets --yes
     python scripts/clean_pipeline_artifacts.py --preset models --yes
     python scripts/clean_pipeline_artifacts.py --run stage1_cnn --yes
+    python scripts/clean_pipeline_artifacts.py --run stage2_meshgn --yes
 
     # Nuclear (adds Hydra outputs/ + .local_test_runs/)
     python scripts/clean_pipeline_artifacts.py --preset all --yes
@@ -49,6 +65,7 @@ from ffaoml.data.stage1_layout import (
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 PRESET_PIPELINE = "pipeline"
+PRESET_STAGE2 = "stage2"
 PRESET_MODELS = "models"
 PRESET_ALL = "all"
 
@@ -61,6 +78,12 @@ PRESET_TARGETS: dict[str, tuple[str, ...]] = {
         "logs",
     ),
     PRESET_MODELS: ("runs",),
+    PRESET_STAGE2: (
+        "dataset-meshgraphnets",
+        "cache-meshgraphnets",
+        "cfd-stage2",
+        "runs",
+    ),
     PRESET_ALL: (
         "dataset",
         "cache",
@@ -76,9 +99,12 @@ TARGET_HELP: dict[str, str] = {
     "dataset": "Entire dataset/ tree (zenodo_data, generated_data, legacy layout)",
     "dataset-zenodo": "dataset/zenodo_data only",
     "dataset-generated": "dataset/generated_data only",
+    "dataset-meshgraphnets": "dataset/meshgraphnets_data only",
     "cache": ".cache/ (Zenodo/LBM upstream HDF5)",
+    "cache-meshgraphnets": ".cache/meshgraphnets_cylinder only",
     "runs": "results/runs/ (baselines, CNN, ConvLSTM, FNO checkpoints)",
-    "cfd": "results/cfd_validation/ (Stage 1 validation figures)",
+    "cfd": "results/cfd_validation/ (Stage 1 + Stage 2 validation figures)",
+    "cfd-stage2": "results/cfd_validation/stage2_meshgraphnets only",
     "logs": "log/ (application log files)",
     "hydra": "outputs/, multirun/, .hydra/ (local Hydra outputs)",
     "test-runs": ".local_test_runs/ (pytest scratch)",
@@ -106,12 +132,18 @@ def artifact_paths(repo_root: Path, target: str) -> list[Path]:
         return [zenodo_dataset_root(root)]
     if target == "dataset-generated":
         return [generated_dataset_root(root)]
+    if target == "dataset-meshgraphnets":
+        return [root / "dataset" / "meshgraphnets_data"]
     if target == "cache":
         return [root / ".cache"]
+    if target == "cache-meshgraphnets":
+        return [root / ".cache" / "meshgraphnets_cylinder"]
     if target == "runs":
         return [root / "results" / "runs"]
     if target == "cfd":
         return [root / "results" / "cfd_validation"]
+    if target == "cfd-stage2":
+        return [root / "results" / "cfd_validation" / "stage2_meshgraphnets"]
     if target == "logs":
         return [root / "log"]
     if target == "hydra":
@@ -257,7 +289,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--preset",
         choices=sorted(PRESET_TARGETS),
         help=(
-            "pipeline: dataset+cache+runs+cfd+logs; "
+            "pipeline: full dataset/ + .cache/ + all runs + all cfd_validation "
+            "(Stage 1 and Stage 2) + logs; "
+            "stage2: mesh dataset + mesh cache + cfd-stage2 + all runs; "
             "models: runs only; all: pipeline+hydra+test-runs"
         ),
     )

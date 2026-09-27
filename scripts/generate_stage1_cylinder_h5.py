@@ -47,7 +47,7 @@ def main() -> None:
         plt.figure(figsize=(6, 5))
         plt.imshow(omega, cmap="RdBu_r", origin="lower")
         plt.colorbar(label="vorticity")
-        plt.title("LBM Re=100 — last snapshot")
+        plt.title("LBM Re=100- last snapshot")
         plt.tight_layout()
         plt.savefig(args.preview, dpi=120)
         plt.close()

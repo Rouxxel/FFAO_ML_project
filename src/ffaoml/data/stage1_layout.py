@@ -33,12 +33,12 @@ def dataset_base(repo_root: str | Path) -> Path:
 
 
 def zenodo_dataset_root(repo_root: str | Path) -> Path:
-    """``dataset/zenodo_data`` — Zenodo or cached/local official HDF5 imports."""
+    """``dataset/zenodo_data``- Zenodo or cached/local official HDF5 imports."""
     return dataset_base(repo_root) / ZENODO_DATA_DIR
 
 
 def generated_dataset_root(repo_root: str | Path) -> Path:
-    """``dataset/generated_data`` — LBM fallback imports."""
+    """``dataset/generated_data``- LBM fallback imports."""
     return dataset_base(repo_root) / GENERATED_DATA_DIR
 
 

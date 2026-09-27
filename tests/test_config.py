@@ -65,6 +65,26 @@ def test_default_dataset_is_stage1_zenodo(default_config) -> None:
     assert cfg.dataset.temporal_split.train == [0, 70]
 
 
+def test_stage2_meshgraphnets_compose_without_data_on_disk() -> None:
+    GlobalHydra.instance().clear()
+    with initialize_config_dir(
+        config_dir=str(config_dir(REPO_ROOT)),
+        version_base="1.3",
+    ):
+        cfg = compose(
+            config_name="config",
+            overrides=["dataset=stage2_meshgraphnets", "model=meshgraphnet"],
+        )
+    GlobalHydra.instance().clear()
+    assert cfg.dataset.stage == 2
+    assert cfg.dataset.source_id == "meshgraphnets_cylinder_flow"
+    assert cfg.dataset.use_trajectory_splits is True
+    assert cfg.dataset["import"].n_steps == 600
+    assert str(cfg.dataset.output_root).endswith("meshgraphnets_data")
+    assert cfg.model.name == "meshgraphnet"
+    assert cfg.model.num_message_passing_steps == 15
+
+
 def test_re_splits_compose_when_selected() -> None:
     GlobalHydra.instance().clear()
     with initialize_config_dir(
@@ -76,6 +96,25 @@ def test_re_splits_compose_when_selected() -> None:
     assert cfg.dataset.stage == 3
     assert cfg.dataset.use_re_splits is True
     assert cfg.dataset.train_re == [50, 75, 100, 150, 200]
+
+
+def test_stage3_cfdbench_compose_without_data_on_disk() -> None:
+    GlobalHydra.instance().clear()
+    with initialize_config_dir(
+        config_dir=str(config_dir(REPO_ROOT)),
+        version_base="1.3",
+    ):
+        cfg = compose(
+            config_name="config",
+            overrides=["dataset=stage3_cfdbench", "model=cnn_re"],
+        )
+    GlobalHydra.instance().clear()
+    assert cfg.dataset.stage == 3
+    assert cfg.dataset.source_id == "cfdbench_cylinder"
+    assert cfg.dataset.use_re_splits is True
+    assert cfg.dataset.train_re == [50, 75, 100, 150, 200]
+    assert str(cfg.dataset.output_root).endswith("cfdbench_data")
+    assert cfg.model.condition_on_re is True
 
 
 def test_write_resolved_config_roundtrip(default_config) -> None:
