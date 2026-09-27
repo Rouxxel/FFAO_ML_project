@@ -47,6 +47,11 @@ FIELD_CHANNEL_ALIASES: Final[dict[str, str]] = {
 # Stage 3 dataset manifest ``source_id`` for CFDBench cylinder subset.
 STAGE3_CFDBENCH_SOURCE_ID: Final[str] = "cfdbench_cylinder"
 
+# Upstream CFDBench interpolated case folder (see documentation/CONTRACTS.md).
+CFDBENCH_UPSTREAM_VELOCITY_X: Final[str] = "u.npy"
+CFDBENCH_UPSTREAM_VELOCITY_Y: Final[str] = "v.npy"
+CFDBENCH_CASE_PARAMS_FILE: Final[str] = "case.json"
+
 METADATA_CSV_COLUMNS: Final[tuple[str, ...]] = (
     "sim_id",
     "re",
