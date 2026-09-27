@@ -1,6 +1,6 @@
 """
 #############################################################################
-### MeshGraphDataset — one-step node prediction (Stage 2)
+### MeshGraphDataset - one-step node prediction (Stage 2)
 ###
 ### @file mesh_dataset.py
 ### @author Sebastian Russo

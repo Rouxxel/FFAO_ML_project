@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 #############################################################################
-### FFAO ML — Stage 1 / Stage 2 end-to-end pipeline
+### FFAO ML - Stage 1 / Stage 2 end-to-end pipeline
 ###
 ### @file main.py
 ### @author Sebastian Russo
@@ -15,7 +15,7 @@ MeshGraphNet train/eval.
 Required:
 pip install -e ".[core,dev,ml]"
 
-``python main.py`` alone does **not** run anything — pass ``--run`` or ``--dry-run``.
+``python main.py`` alone does **not** run anything - pass ``--run`` or ``--dry-run``.
 
 Quick reference::
 
@@ -31,20 +31,20 @@ Quick reference::
     # Optional ConvLSTM / FNO
     python main.py --run --with-convlstm --with-fno --epochs 80 --fno-epochs 50
 
-    # Single phase — Stage 1 (--run required)
+    # Single phase - Stage 1 (--run required)
     python main.py --run --only import
     python main.py --run --only generate
     python main.py --run --only train_cnn --epochs 50
     python main.py --run --from train_cnn
 
-    # Full pipeline — Stage 2 (MeshGraphNets; import needs TensorFlow)
+    # Full pipeline - Stage 2 (MeshGraphNets; import needs TensorFlow)
     python main.py --stage2 --dry-run
     python main.py --stage2 --run --max-trajectories 2   # recommended first run
     python main.py --stage2 --run   # full shards (very large; see import logs)
     python main.py --stage2 --run --max-trajectories 2 --split train --split val
     python main.py --run dataset=stage2_meshgraphnets --max-trajectories 2
 
-    # Single phase — Stage 2 (--stage2 and --run required)
+    # Single phase - Stage 2 (--stage2 and --run required)
     python main.py --stage2 --run --only import --max-trajectories 1
     python main.py --stage2 --run --only mesh_validation
     python main.py --stage2 --run --only train_meshgn --epochs 50

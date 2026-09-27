@@ -70,7 +70,7 @@ log_handler.info("FFAO ML logging initialized")
 if log_file is not None:
     log_handler.info("Log file: %s (cwd: %s)", log_file, Path.cwd())
 else:
-    log_handler.warning("File logging unavailable — console only (cwd: %s)", Path.cwd())
+    log_handler.warning("File logging unavailable - console only (cwd: %s)", Path.cwd())
 
 
 def shutdown_logger() -> None:

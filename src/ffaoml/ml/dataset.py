@@ -1,6 +1,6 @@
 """
 #############################################################################
-### FlowDataset — one-step prediction windows
+### FlowDataset - one-step prediction windows
 ###
 ### @file dataset.py
 ### @author Sebastian Russo

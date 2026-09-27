@@ -52,7 +52,7 @@ def main() -> None:
             "After clean_pipeline_artifacts (or a fresh clone), train first:\n"
             "  python main.py --run\n"
             "Default CNN output: results/runs/stage1_cnn/ "
-            "(not configs/config.yaml — that is the Hydra template in git).",
+            "(not configs/config.yaml - that is the Hydra template in git).",
             run_dir,
         )
         raise SystemExit(1)

@@ -1,6 +1,6 @@
 """
 #############################################################################
-### MeshGraphNet (Stage 2) — simplified v1
+### MeshGraphNet (Stage 2) - simplified v1
 ###
 ### @file meshgraphnet.py
 ### @author Sebastian Russo

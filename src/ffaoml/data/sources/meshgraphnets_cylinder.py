@@ -1,6 +1,6 @@
 """
 #############################################################################
-### Stage 2 — MeshGraphNets cylinder_flow import
+### Stage 2 - MeshGraphNets cylinder_flow import
 ###
 ### @file meshgraphnets_cylinder.py
 ### @author Sebastian Russo

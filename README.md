@@ -1,6 +1,6 @@
 # FFAO ML Project
 
-**Fluid Flow Around an Obstacle** — research codebase for **2D incompressible flow
+**Fluid Flow Around an Obstacle** - research codebase for **2D incompressible flow
 around a cylinder**: staged public datasets, optional in-house CFD, and ML models
 that respect physical fields (velocity, pressure, vorticity) rather than treating
 simulations as generic images.
@@ -78,7 +78,7 @@ Planning notes at repo root (`CFD_DATA_TASKS.md`, `FOUNDATION_TASKS.md`,
 From the repo root (after `pip install -r requirements.txt` or `pip install -e ".[core,dev,ml]"`):
 
 ```bash
-python main.py --dry-run          # preview only — does not train or download
+python main.py --dry-run          # preview only - does not train or download
 python main.py --run --local-file path/to/cylinder_re100_grid64_last100.h5
 python main.py --run --with-convlstm --epochs 80 --force
 ```
@@ -309,9 +309,9 @@ CI: [documentation/setup/CI.md](documentation/setup/CI.md) (GitHub Actions).
 
 ### Release tags (optional)
 
-- `foundation-v0.1` — package, configs, CI baseline  
-- `data-stage1-v0.1` — Stage 1 import + validation (after local import/validation)  
-- `ml-stage1-v0.1` — Stage 1 ML Phases 0–4 (baselines, CNN, ConvLSTM, compare); tag after `pytest` with `[ml]`
+- `foundation-v0.1` - package, configs, CI baseline  
+- `data-stage1-v0.1` - Stage 1 import + validation (after local import/validation)  
+- `ml-stage1-v0.1` - Stage 1 ML Phases 0–4 (baselines, CNN, ConvLSTM, compare); tag after `pytest` with `[ml]`
 
 ## Documentation
 
@@ -338,7 +338,7 @@ This project is **open source**. You may use the code and published results if y
 | Datasets, checkpoints, figures, metrics | [CC BY 4.0](LICENSE-DATA) |
 
 See [NOTICE](NOTICE) and [documentation/ATTRIBUTION.md](documentation/ATTRIBUTION.md).
-Academic citation: [CITATION.cff](CITATION.cff) — keep `version` aligned with
+Academic citation: [CITATION.cff](CITATION.cff) - keep `version` aligned with
 `pyproject.toml` when tagging releases.
 
 **Copyright © 2026 Sebastian Russo**

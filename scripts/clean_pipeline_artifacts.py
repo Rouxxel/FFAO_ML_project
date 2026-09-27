@@ -14,14 +14,14 @@ still support skip-if-done; delete only what you need.
 
 Presets:
 
-- ``pipeline`` — **Stage 1 and Stage 2** on disk: entire ``dataset/`` (Zenodo,
+- ``pipeline``- **Stage 1 and Stage 2** on disk: entire ``dataset/`` (Zenodo,
   generated, **meshgraphnets**), entire ``.cache/`` (Zenodo/LBM **and** mesh
   TFRecords), all ``results/runs/``, all ``results/cfd_validation/`` (Stage 1
   **and** ``stage2_meshgraphnets/``), plus ``log/``.
-- ``stage2`` — Mesh-focused subset: ``dataset-meshgraphnets``, mesh cache,
+- ``stage2``- Mesh-focused subset: ``dataset-meshgraphnets``, mesh cache,
   ``cfd-stage2``, and all runs (same ``runs`` target as ``pipeline``).
-- ``models`` — ``results/runs/`` only.
-- ``all`` — ``pipeline`` plus Hydra dirs and ``.local_test_runs/``.
+- ``models``- ``results/runs/`` only.
+- ``all``- ``pipeline`` plus Hydra dirs and ``.local_test_runs/``.
 
 Quick reference::
 

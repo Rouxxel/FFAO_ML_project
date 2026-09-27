@@ -352,10 +352,10 @@ def write_summary_markdown(
         "",
         "## Figures",
         "",
-        "- `vorticity_snapshots.png` — PRD §13 item 2",
-        "- `velocity_snapshots.png` — PRD §13 item 1 (when velocity present)",
-        "- `shedding_animation.gif` — PRD §13 item 6",
-        "- `shedding_spectrum.png` — spectral content of wake proxy",
+        "- `vorticity_snapshots.png`- PRD §13 item 2",
+        "- `velocity_snapshots.png`- PRD §13 item 1 (when velocity present)",
+        "- `shedding_animation.gif`- PRD §13 item 6",
+        "- `shedding_spectrum.png`- spectral content of wake proxy",
         "",
         "## Shedding metrics (qualitative)",
         "",
@@ -365,7 +365,7 @@ def write_summary_markdown(
         f"- Literature reference St ≈ {LITERATURE_ST_RE100} at Re≈100 "
         "(order-of-magnitude check only).",
         "",
-        "## Force coefficients (PRD §8 — partial for Stage 1)",
+        "## Force coefficients (PRD §8- partial for Stage 1)",
         "",
     ]
     if forces_available:
