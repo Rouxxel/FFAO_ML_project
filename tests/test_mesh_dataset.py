@@ -12,6 +12,9 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+
+pytest.importorskip("torch")
+
 from hydra import compose, initialize_config_dir
 from hydra.core.global_hydra import GlobalHydra
 from torch.utils.data import DataLoader
