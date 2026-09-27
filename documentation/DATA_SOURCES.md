@@ -199,7 +199,8 @@ Zarr for tests; `fd` / `dedalus` / OpenFOAM raise or defer). See the CFD/data
 task checklist in the repo root for Track B vs import adapters.
 
 **CI note:** GitHub Actions does **not** download Zenodo or CFDBench; tests use
-`tests/fixtures/` and small synthetic imports.
+`tests/fixtures/` (including `cfdbench_mini/` and `cfdbench_upstream_case/`) and small
+synthetic imports. Regenerate with `python tests/fixtures/build_cfdbench_mini.py`.
 
 ---
 

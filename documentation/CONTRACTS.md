@@ -115,18 +115,35 @@ Targets remain the four field channels (no Re in the target tensor).
 
 ### CFDBench channel map (import target)
 
-Upstream CFDBench interpolated fields are mapped into project channels before
-Zarr write (exact upstream names finalized in the import adapter):
+Upstream **interpolated** cases live under
+`data/cylinder/{prop,bc,geo}/case*/` (see [CFDBench](https://github.com/luo-yining/CFDBench)):
 
-| Project channel | Typical CFDBench / grid role |
-|-----------------|------------------------------|
-| `velocity_x` | x-velocity |
-| `velocity_y` | y-velocity |
-| `pressure` | pressure |
-| `vorticity` | vorticity or derived ω |
+| Upstream file | Shape (typical) | Role |
+|---------------|-----------------|------|
+| `u.npy` | `(T, 64, 64)` float64 | Horizontal velocity |
+| `v.npy` | `(T, 64, 64)` float64 | Vertical velocity |
+| `case.json` | object | `vel_in`, `density`, `viscosity`, `radius`, geometry / BC fields |
 
-Default grid: **64×64** for the cylinder interpolated subset documented in
-[DATA_SOURCES.md](./DATA_SOURCES.md).
+Constants: `CFDBENCH_UPSTREAM_VELOCITY_*`, `CFDBENCH_CASE_PARAMS_FILE` in
+`ffaoml.contracts`. Probe helper: `ffaoml.data.sources.cfdbench_probe`.
+
+**Import mapping** into project Zarr (`DEFAULT_FIELD_CHANNELS`):
+
+| Project channel | Source |
+|-----------------|--------|
+| `velocity_x` | `u.npy` |
+| `velocity_y` | `v.npy` |
+| `pressure` | Not shipped in upstream v1; fill with zeros or derive in import adapter (Phase 2) |
+| `vorticity` | Derived from `(u, v)` finite differences at import (Phase 2) |
+
+**Reynolds:** for `cylinder/prop`, use Re = ρ U D / μ with U = `vel_in`, D = 2 × `radius`,
+ρ = `density`, μ = `viscosity` (see `estimate_reynolds_from_params` in `cfdbench_probe`).
+Map each selected case to one `metadata.csv` row (`re`, `sim_id`, simulation-level `split`).
+
+Default production grid: **64×64**. CI fixture `tests/fixtures/cfdbench_mini/` uses a
+smaller grid; layout matches Stage 1 Zarr.
+
+**Local probe (no CI download):** `python scripts/inspect_cfdbench_sample.py <data_root>`.
 
 ### On-disk layout (import target)
 
