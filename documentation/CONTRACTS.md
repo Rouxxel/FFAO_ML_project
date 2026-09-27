@@ -160,7 +160,7 @@ dataset/cfdbench_data/
 remains a Re-list template for stub multi-Re data and tests.
 
 **Code:** `ffaoml.ml.dataset.FlowMultiReDataset`, `ffaoml.ml.splits`,
-`ffaoml.data.sources.cfdbench_cylinder` (import adapter, planned).
+`ffaoml.data.sources.cfdbench_cylinder` (download + import).
 
 ---
 

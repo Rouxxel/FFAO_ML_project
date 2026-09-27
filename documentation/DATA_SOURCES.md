@@ -179,9 +179,18 @@ experiments (e.g. train on Re ∈ {100,200,300,400}, test on unseen Re).
 **Storage:** ~**13.4 GB** interpolated subset (do **not** download raw ~460 GB for
 this project).
 
-**Hydra (config skeleton):** `configs/dataset/stage3_cfdbench.yaml`,
-`configs/model/cnn_re.yaml`; multi-Re grid layout in [CONTRACTS.md](./CONTRACTS.md).
-Use `dataset=splits` for the same Re lists with stub/own-CFD data during development.
+**Hydra:** `configs/dataset/stage3_cfdbench.yaml`, `configs/model/cnn_re.yaml`; layout in
+[CONTRACTS.md](./CONTRACTS.md). Use `dataset=splits` for stub/own-CFD during development.
+
+**Import (local; requires `huggingface_hub` for download, or `--local-data-root`):**
+
+```bash
+python scripts/download_stage3_cfdbench.py --max-cases 1 --local-data-root path/to/data
+python scripts/inspect_cfdbench_sample.py path/to/data/cylinder/prop/case0000
+python scripts/download_stage3_cfdbench.py --re 100,200 --max-cases 10
+```
+
+Default cache: `.cache/cfdbench/`; dataset root: `dataset/cfdbench_data/`.
 
 ---
 
