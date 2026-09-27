@@ -42,7 +42,10 @@ def test_mesh_rollout_curves_on_fixture_series() -> None:
     pres = traj.pressure.reshape(-1)
     stats = MeshPreprocessStats(
         velocity_mean=(float(vel[:, 0].mean()), float(vel[:, 1].mean())),
-        velocity_std=(float(max(vel[:, 0].std(), 1e-8)), float(max(vel[:, 1].std(), 1e-8))),
+        velocity_std=(
+            float(max(vel[:, 0].std(), 1e-8)),
+            float(max(vel[:, 1].std(), 1e-8)),
+        ),
         pressure_mean=float(pres.mean()),
         pressure_std=float(max(pres.std(), 1e-8)),
         fit_split="train",
