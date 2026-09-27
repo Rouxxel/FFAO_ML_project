@@ -1,8 +1,8 @@
 # External dataset sources (staged)
 
-Canonical URLs and how each stage fits the project. **Active work uses Stage 1 only**
-(small download). Stage 2 and Stage 3 are deferred until storage and prior stages
-are complete.
+Canonical URLs and how each stage fits the project. **Stage 1** and **Stage 2**
+have import/train paths; **Stage 3** (CFDBench) is **planned** — config and contracts
+land first; import adapter follows.
 
 Import adapters should normalize all sources into the repository layout described
 in [CONTRACTS.md](./CONTRACTS.md) and [ARCHITECTURE.md](./ARCHITECTURE.md) §5.1,
@@ -41,8 +41,8 @@ with `dataset/manifest.json` recording `stage`, `source_id`, and download proven
 | Stage | Purpose | Storage (order of magnitude) | Status |
 |-------|---------|------------------------------|--------|
 | **1** | End-to-end pipeline; temporal evolution at **Re ≈ 100** | ~1 MB | **Active** — import + validation implemented |
-| **2** | Unstructured mesh; MeshGraphNet-style models | Multi-GB TFRecords | Deferred (no adapter yet) |
-| **3** | Generalization across physical conditions (CFDBench) | ~13.4 GB interpolated | Deferred (no adapter yet) |
+| **2** | Unstructured mesh; MeshGraphNet-style models | Multi-GB TFRecords | **Active** — import + train (see § Stage 2) |
+| **3** | Generalization across physical conditions (CFDBench) | ~13.4 GB interpolated | **Planned** — `dataset=stage3_cfdbench` (import adapter next) |
 
 **Stage 1 first research question:** Can a model learn the **temporal evolution**
 of vortex shedding (e.g. flow(t) → flow(t+Δt), rolled out to t+50)?
@@ -123,7 +123,7 @@ repo’s [LICENSE-DATA](../LICENSE-DATA).
 
 ---
 
-## Stage 2 — DeepMind MeshGraphNets `cylinder_flow` (deferred)
+## Stage 2 — DeepMind MeshGraphNets `cylinder_flow`
 
 Unstructured triangular mesh; node features (`mesh_pos`, `cells`, `node_type`,
 `velocity`, `pressure`); **600** steps, **dt = 0.01**. Enables GNN / MeshGraphNet
@@ -165,7 +165,7 @@ python scripts/run_stage2_pipeline.py --run --max-trajectories 2
 
 ---
 
-## Stage 3 — CFDBench generalization (deferred)
+## Stage 3 — CFDBench generalization (planned)
 
 Regular **64×64** interpolated grids; cylinder case; varying boundary conditions,
 geometry, and physical properties. Intended for **condition generalization**
@@ -177,8 +177,11 @@ experiments (e.g. train on Re ∈ {100,200,300,400}, test on unseen Re).
 | CFDBench on Hugging Face | https://huggingface.co/datasets/luoyining/CFDBench |
 
 **Storage:** ~**13.4 GB** interpolated subset (do **not** download raw ~460 GB for
-this project). Use `configs/dataset/splits.yaml` Re-style splits when this stage
-is enabled.
+this project).
+
+**Hydra (config skeleton):** `configs/dataset/stage3_cfdbench.yaml`,
+`configs/model/cnn_re.yaml`; multi-Re grid layout in [CONTRACTS.md](./CONTRACTS.md).
+Use `dataset=splits` for the same Re lists with stub/own-CFD data during development.
 
 ---
 

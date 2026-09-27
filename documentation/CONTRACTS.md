@@ -87,6 +87,66 @@ For **Stage 1** grid imports with a single trajectory, time blocks in
 
 ---
 
+## Multi-Re grid layout (Stage 3 — CFDBench / own CFD)
+
+Stage 3 reuses the **Stage 1 Zarr grid** contract (`(T, C, H, W)` with default
+four channels). Multiple simulations live under one dataset root; each row in
+`metadata.csv` is one Reynolds number (or one CFDBench case id mapped to `re`).
+
+### Simulation-level splits (PRD §11)
+
+Hydra lists `train_re`, `val_re`, and `test_re`. A simulation belongs to the ML
+**train**, **val**, or **test** pool when its `metadata.csv` `re` matches one of
+the floats in the corresponding list. **Do not** assign splits by random frames.
+
+Within each simulation, `dataset.temporal_split` selects time indices for
+train/val/test **windows** (same semantics as Stage 1, but applied per `sim_id`).
+
+| Config flag | Meaning |
+|-------------|---------|
+| `use_re_splits: true` | Build datasets via `FlowMultiReDataset` (Stage 3) |
+| `use_trajectory_splits: false` | Not mesh trajectory shards |
+
+### Re conditioning (`model=cnn_re`)
+
+When `condition_on_re: true`, the CNN input gains one extra channel: normalized
+Re scaled using **min/max over `train_re` only** (see `ffaoml.ml.conditioning`).
+Targets remain the four field channels (no Re in the target tensor).
+
+### CFDBench channel map (import target)
+
+Upstream CFDBench interpolated fields are mapped into project channels before
+Zarr write (exact upstream names finalized in the import adapter):
+
+| Project channel | Typical CFDBench / grid role |
+|-----------------|------------------------------|
+| `velocity_x` | x-velocity |
+| `velocity_y` | y-velocity |
+| `pressure` | pressure |
+| `vorticity` | vorticity or derived ω |
+
+Default grid: **64×64** for the cylinder interpolated subset documented in
+[DATA_SOURCES.md](./DATA_SOURCES.md).
+
+### On-disk layout (import target)
+
+```text
+dataset/cfdbench_data/
+├── manifest.json          # stage: 3, source_id: cfdbench_cylinder
+├── metadata.csv             # one row per Re / case
+└── simulations/
+    └── <sim_id>/
+        └── fields.zarr/
+```
+
+**Hydra:** prefer `dataset=stage3_cfdbench` for CFDBench work; `dataset=splits`
+remains a Re-list template for stub multi-Re data and tests.
+
+**Code:** `ffaoml.ml.dataset.FlowMultiReDataset`, `ffaoml.ml.splits`,
+`ffaoml.data.sources.cfdbench_cylinder` (import adapter, planned).
+
+---
+
 ## Mesh graph layout (Stage 2 — unstructured)
 
 Stage 2 uses **one graph per trajectory** (DeepMind MeshGraphNets `cylinder_flow`).

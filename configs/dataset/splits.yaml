@@ -1,5 +1,6 @@
 # @package dataset
-# Stage 3 / own multi-Re CFD — simulation-level Reynolds splits (PRD §11).
+# Stage 3 Re-list template — stub multi-Re CFD and tests (PRD §11).
+# For CFDBench imports use dataset/stage3_cfdbench.yaml (same Re lists + import metadata).
 # For Stage 1 (Zenodo Re=100 only), use dataset/stage1_zenodo.yaml instead.
 
 stage: 3

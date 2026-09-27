@@ -44,6 +44,9 @@ FIELD_CHANNEL_ALIASES: Final[dict[str, str]] = {
 # - False -> fluid cell; participate in field losses and divergence penalties.
 # Grid spacing (dx, dy, origin) lives in simulation metadata, not in the mask.
 
+# Stage 3 dataset manifest ``source_id`` for CFDBench cylinder subset.
+STAGE3_CFDBENCH_SOURCE_ID: Final[str] = "cfdbench_cylinder"
+
 METADATA_CSV_COLUMNS: Final[tuple[str, ...]] = (
     "sim_id",
     "re",
