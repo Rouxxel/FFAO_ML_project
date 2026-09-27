@@ -1,0 +1,4 @@
+sim_id,re,split,path,u_inlet,nu,diameter,nx,ny,dt,n_steps,seed
+re_050_cfdbench,50.0,train,simulations/re_050_cfdbench,1.0,0.01,0.1,16,16,0.1,8,50
+re_100_cfdbench,100.0,train,simulations/re_100_cfdbench,1.0,0.01,0.1,16,16,0.1,8,100
+re_125_cfdbench,125.0,val,simulations/re_125_cfdbench,1.0,0.01,0.1,16,16,0.1,8,125

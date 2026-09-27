@@ -24,3 +24,15 @@ Regenerate:
 ```bash
 python tests/fixtures/build_meshgraphnets_mini.py
 ```
+
+## `cfdbench_mini/` and `cfdbench_upstream_case/`
+
+Stage 3 multi-Re Zarr layout (three Reynolds numbers, 16×16 grid, 8 timesteps) and a
+synthetic upstream CFDBench case folder (`u.npy`, `v.npy`, `case.json`) for probe tests.
+No CFDBench download in CI.
+
+Regenerate:
+
+```bash
+python tests/fixtures/build_cfdbench_mini.py
+```
