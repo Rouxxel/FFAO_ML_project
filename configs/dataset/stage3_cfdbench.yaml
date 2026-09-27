@@ -1,0 +1,48 @@
+# @package dataset
+# Stage 3 — CFDBench cylinder interpolated subset (see documentation/DATA_SOURCES.md)
+# Re lists match PRD §11 / configs/dataset/splits.yaml (simulation-level splits).
+
+stage: 3
+source_id: cfdbench_cylinder
+source_url: https://github.com/luo-yining/CFDBench
+
+output_root: ${paths.dataset_root}/cfdbench_data
+
+use_re_splits: true
+use_trajectory_splits: false
+
+# Simulation-level pools (metadata.csv ``re`` must match).
+train_re:
+  - 50
+  - 75
+  - 100
+  - 150
+  - 200
+
+val_re:
+  - 125
+  - 175
+
+test_re:
+  - 250
+  - 300
+  - 400
+
+# Time windows applied inside each simulation (all Re must cover these indices).
+temporal_split:
+  strategy: by_time_index
+  train: [0, 80]
+  val: [0, 90]
+  test: [0, 100]
+
+prediction:
+  delta_steps: 1
+
+normalization:
+  fit_split: train
+  per_channel: true
+
+import:
+  cache_dir: .cache/cfdbench
+  # Phase 2: HF download paths, case filters, max_cases — see import adapter.
+  max_cases: null
