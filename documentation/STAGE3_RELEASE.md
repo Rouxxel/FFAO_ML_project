@@ -72,5 +72,6 @@ Record the commit hash, `dataset/cfdbench_data/manifest.json` hash, and
 - Metrics are on **interpolated 64×64** grids; not comparable to Stage 1 Zenodo
   or Stage 2 mesh rollouts without extra post-processing.
 
-See [experiments/stage3_re_generalization.md](../experiments/stage3_re_generalization.md)
-and [DATA_SOURCES.md](./DATA_SOURCES.md).
+See [experiments/stage3_re_generalization.md](../experiments/stage3_re_generalization.md),
+[DATA_SOURCES.md](./DATA_SOURCES.md), and [STAGE3_GAPS.md](./STAGE3_GAPS.md) for
+outstanding follow-ups.

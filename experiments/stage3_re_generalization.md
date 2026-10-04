@@ -96,3 +96,9 @@ Outputs (under `results/runs/stage3_cnn_re/`):
 
 CI uses `tests/fixtures/build_multi_re_stub_dataset.py` (stub solver, no full CFD) and
 `tests/test_stage3_pipeline.py` (orchestrator dry-run).
+
+## Remaining gaps
+
+See [documentation/STAGE3_GAPS.md](../documentation/STAGE3_GAPS.md) (operator checklist,
+CI vs local, deferred v2 scope). Replace reading `STAGE3_TASKS.md` with that file plus
+the runbooks linked at the top of STAGE3_GAPS.

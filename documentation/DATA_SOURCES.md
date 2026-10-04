@@ -200,7 +200,8 @@ python main.py --stage3 --run --max-cases 20
 python scripts/run_stage3_pipeline.py --run --max-cases 20
 ```
 
-Local release checklist: [STAGE3_RELEASE.md](./STAGE3_RELEASE.md).
+Local release checklist: [STAGE3_RELEASE.md](./STAGE3_RELEASE.md). Open gaps:
+[STAGE3_GAPS.md](./STAGE3_GAPS.md).
 
 ---
 

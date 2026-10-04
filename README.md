@@ -129,6 +129,7 @@ python scripts/run_stage3_pipeline.py --run --max-cases 20
 Phases: **import** → **grid_validation** → **train_cnn_re** → **eval_re**. Runbook:
 [experiments/stage3_re_generalization.md](experiments/stage3_re_generalization.md).
 Local release gate: [documentation/STAGE3_RELEASE.md](documentation/STAGE3_RELEASE.md).
+Remaining gaps / follow-ups: [documentation/STAGE3_GAPS.md](documentation/STAGE3_GAPS.md).
 
 Reset Stage 3 artifacts: `python scripts/clean_pipeline_artifacts.py --preset stage3 --yes`
 
