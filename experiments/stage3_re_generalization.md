@@ -47,10 +47,11 @@ python scripts/evaluate_re_generalization.py \
   --run-dir results/runs/cnn_multire
 ```
 
-Outputs:
+Outputs (under `results/runs/stage3_cnn_re/`):
 
-- `re_generalization_metrics.json` — per-Re one-step MSE and regime tags
+- `re_generalization_metrics.json` — per-simulation one-step MSE, regime tags, rollout curves
 - `figures/re_generalization_heatmap.png` — PRD §13 item 12 style summary
+- `figures/error_vs_horizon_by_re.png` — rollout MSE vs horizon per Reynolds (optional `--no-rollout`)
 
 ## Tests
 

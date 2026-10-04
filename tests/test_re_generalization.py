@@ -117,8 +117,10 @@ def test_re_generalization_pipeline(multire_cfg) -> None:
 
         shutil.rmtree(run_dir)
     run_cnn_training(multire_cfg, run_dir, repo_root=REPO_ROOT)
-    result = run_re_generalization_evaluation(run_dir)
+    result = run_re_generalization_evaluation(run_dir, rollout_horizon=3)
     assert result.heatmap_path.is_file()
     payload = json.loads(result.metrics_path.read_text(encoding="utf-8"))
     assert "exp3_extrapolation" in payload["experiments"]
     assert payload["experiments"]["exp3_extrapolation"]
+    assert "rollout" in payload
+    assert payload["rollout"]["per_simulation"]
