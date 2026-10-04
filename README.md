@@ -43,7 +43,7 @@ FFAO_ML_project/
 │   │   ├── evaluation/         # Baselines, metrics, rollout, plots
 │   │   ├── ml/                 # FlowDataset, preprocessing, splits
 │   │   ├── models/             # CNN, ConvLSTM, FNO, MeshGraphNet
-│   │   ├── pipeline/           # stage1.py + stage2.py (used by main.py)
+│   │   ├── pipeline/           # stage1.py + stage2.py + stage3.py (main.py)
 │   │   ├── physics/            # NS helpers, Reynolds, torch ops
 │   │   ├── training/           # Train loops, losses, checkpoints
 │   │   └── validation/         # Stage 1 CFD validation figures
@@ -52,7 +52,7 @@ FFAO_ML_project/
 │   ├── fixtures/               # Mini HDF5 and dataset builders
 │   └── test_*.py
 ├── .github/workflows/          # CI and security workflows
-├── main.py                     # Stage 1 (default) and Stage 2 (--stage2) entry point
+├── main.py                     # Stage 1 (default), Stage 2 (--stage2), Stage 3 (--stage3)
 ├── pyproject.toml
 ├── requirements.txt
 ├── CITATION.cff
@@ -72,6 +72,7 @@ Planning notes at repo root (`CFD_DATA_TASKS.md`, `FOUNDATION_TASKS.md`,
 | ML `FlowDataset` / normalization (Stage 1 temporal splits) | Ready |
 | CNN / ConvLSTM training, baselines, rollout eval | Ready (`ml-stage1-v0.1`) |
 | Stage 2 MeshGraphNets import, mesh validation, train/eval | Ready (see below) |
+| Stage 3 CFDBench import, grid validation, Re-CNN train/eval | Ready (see below) |
 
 ## One-command pipeline (`main.py`)
 
@@ -111,6 +112,25 @@ Phases: **import** → **mesh_validation** → **train_meshgn** → **eval_meshg
 [experiments/stage2_meshgraphnets.md](experiments/stage2_meshgraphnets.md).
 
 Reset Stage 2 artifacts: `python scripts/clean_pipeline_artifacts.py --preset stage2 --yes`
+
+### Stage 3 pipeline (CFDBench multi-Re)
+
+Import uses **Hugging Face** (`huggingface_hub`) unless you pass a local CFDBench
+tree. Budget **~13 GB** for the interpolated cylinder subset; cap smoke imports
+with `--max-cases`.
+
+```bash
+python main.py --stage3 --dry-run
+python main.py --stage3 --run --max-cases 20
+python main.py --run dataset=stage3_cfdbench --max-cases 20
+python scripts/run_stage3_pipeline.py --run --max-cases 20
+```
+
+Phases: **import** → **grid_validation** → **train_cnn_re** → **eval_re**. Runbook:
+[experiments/stage3_re_generalization.md](experiments/stage3_re_generalization.md).
+Local release gate: [documentation/STAGE3_RELEASE.md](documentation/STAGE3_RELEASE.md).
+
+Reset Stage 3 artifacts: `python scripts/clean_pipeline_artifacts.py --preset stage3 --yes`
 
 ### Reset local pipeline outputs
 

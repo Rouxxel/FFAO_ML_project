@@ -1,8 +1,7 @@
 # External dataset sources (staged)
 
 Canonical URLs and how each stage fits the project. **Stage 1** and **Stage 2**
-have import/train paths; **Stage 3** (CFDBench) is **planned** — config and contracts
-land first; import adapter follows.
+have import/train paths; **Stage 3** (CFDBench) is **active (import)** — see § Stage 3.
 
 Import adapters should normalize all sources into the repository layout described
 in [CONTRACTS.md](./CONTRACTS.md) and [ARCHITECTURE.md](./ARCHITECTURE.md) §5.1,
@@ -42,7 +41,7 @@ with `dataset/manifest.json` recording `stage`, `source_id`, and download proven
 |-------|---------|------------------------------|--------|
 | **1** | End-to-end pipeline; temporal evolution at **Re ≈ 100** | ~1 MB | **Active** — import + validation implemented |
 | **2** | Unstructured mesh; MeshGraphNet-style models | Multi-GB TFRecords | **Active** — import + train (see § Stage 2) |
-| **3** | Generalization across physical conditions (CFDBench) | ~13.4 GB interpolated | **Planned** — `dataset=stage3_cfdbench` (import adapter next) |
+| **3** | Generalization across physical conditions (CFDBench) | ~13.4 GB interpolated | **Active (import)** — `dataset=stage3_cfdbench`, `main.py --stage3` |
 
 **Stage 1 first research question:** Can a model learn the **temporal evolution**
 of vortex shedding (e.g. flow(t) → flow(t+Δt), rolled out to t+50)?
@@ -165,7 +164,7 @@ python scripts/run_stage2_pipeline.py --run --max-trajectories 2
 
 ---
 
-## Stage 3 — CFDBench generalization (planned)
+## Stage 3 — CFDBench generalization (active)
 
 Regular **64×64** interpolated grids; cylinder case; varying boundary conditions,
 geometry, and physical properties. Intended for **condition generalization**
@@ -193,6 +192,15 @@ python scripts/validate_stage3_cfdbench.py
 
 Default cache: `.cache/cfdbench/`; dataset root: `dataset/cfdbench_data/`.
 Validation report: `results/cfd_validation/stage3_cfdbench/`.
+
+**Orchestration:**
+
+```bash
+python main.py --stage3 --run --max-cases 20
+python scripts/run_stage3_pipeline.py --run --max-cases 20
+```
+
+Local release checklist: [STAGE3_RELEASE.md](./STAGE3_RELEASE.md).
 
 ---
 

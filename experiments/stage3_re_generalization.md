@@ -1,5 +1,19 @@
 # Stage 3 — Reynolds generalization (PRD §14 experiments 1–3)
 
+## Data source and citation
+
+Stage 3 v1 uses the **CFDBench** interpolated cylinder subset (~**13.4 GB** on disk;
+do not mirror the full ~460 GB raw release).
+
+| Resource | URL |
+|----------|-----|
+| Paper / project | [CFDBench (GitHub)](https://github.com/luo-yining/CFDBench) |
+| Download | [luoyining/CFDBench on Hugging Face](https://huggingface.co/datasets/luoyining/CFDBench) |
+
+When publishing results, cite the CFDBench authors and note that this repo imports
+**64×64** `u`, `v`, `p` (and derived ω) into the contract Zarr layout under
+`dataset/cfdbench_data/`.
+
 ## Setup
 
 - Hydra: `model=cnn_re` (`condition_on_re: true`).
@@ -20,7 +34,18 @@
 | **2** | `val_re` | Interpolation between trained Re |
 | **3** | `test_re` | Extrapolation beyond trained Re |
 
-## Commands — CFDBench (recommended E2E)
+## Commands — one-shot pipeline (recommended)
+
+```bash
+python main.py --stage3 --run --max-cases 20
+# equivalent:
+python scripts/run_stage3_pipeline.py --run --max-cases 20
+```
+
+Phases: `import` → `grid_validation` → `train_cnn_re` → `eval_re`. Use
+`--skip-cfd-validation` on `main.py --stage3` to skip grid QC figures.
+
+## Commands — CFDBench (step by step)
 
 ```bash
 python scripts/download_stage3_cfdbench.py --max-cases 20
@@ -31,7 +56,11 @@ python scripts/train.py --run-id stage3_cnn_re \
 
 python scripts/evaluate_re_generalization.py \
   --run-dir results/runs/stage3_cnn_re
+
+python scripts/verify_stage3_local.py
 ```
+
+Local release tags and checklist: [documentation/STAGE3_RELEASE.md](../documentation/STAGE3_RELEASE.md).
 
 Tune `dataset.train_re` / `val_re` / `test_re` if imported cases do not match PRD
 integers exactly (`import.re_tolerance` in `stage3_cfdbench.yaml`).
@@ -53,6 +82,17 @@ Outputs (under `results/runs/stage3_cnn_re/`):
 - `figures/re_generalization_heatmap.png` — PRD §13 item 12 style summary
 - `figures/error_vs_horizon_by_re.png` — rollout MSE vs horizon per Reynolds (optional `--no-rollout`)
 
+## Known limits (v0.1)
+
+- **Subset:** cylinder `prop` cases only; BC/geometry sweeps elsewhere in CFDBench are deferred.
+- **Re coverage:** import must include simulations near every `train_re` / `val_re` /
+  `test_re` in config (`import.re_tolerance`); use `--re` filters or raise `max_cases`
+  if `verify_stage3_local.py` fails on `test_re`.
+- **Metrics:** one-step and rollout MSE on normalized grids; not directly comparable to
+  Stage 1 Zenodo CNN numbers or Stage 2 mesh rollouts without alignment work.
+- **CI:** fixture/`cfdbench_mini` only; full HF download is manual.
+
 ## Tests
 
-CI uses `tests/fixtures/build_multi_re_stub_dataset.py` (stub solver, no full CFD).
+CI uses `tests/fixtures/build_multi_re_stub_dataset.py` (stub solver, no full CFD) and
+`tests/test_stage3_pipeline.py` (orchestrator dry-run).
