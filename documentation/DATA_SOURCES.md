@@ -188,9 +188,11 @@ this project).
 python scripts/download_stage3_cfdbench.py --max-cases 1 --local-data-root path/to/data
 python scripts/inspect_cfdbench_sample.py path/to/data/cylinder/prop/case0000
 python scripts/download_stage3_cfdbench.py --re 100,200 --max-cases 10
+python scripts/validate_stage3_cfdbench.py
 ```
 
 Default cache: `.cache/cfdbench/`; dataset root: `dataset/cfdbench_data/`.
+Validation report: `results/cfd_validation/stage3_cfdbench/`.
 
 ---
 
