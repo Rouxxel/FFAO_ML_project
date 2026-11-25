@@ -3,7 +3,7 @@
 **Fluid Flow Around an Obstacle** - research codebase for **2D incompressible flow
 around a cylinder**: staged public datasets, optional in-house CFD, and ML models
 that respect physical fields (velocity, pressure, vorticity) rather than treating
-simulations as generic images.
+simulations as generic images
 
 ## Goals
 
