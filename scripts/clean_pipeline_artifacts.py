@@ -9,7 +9,8 @@
 #############################################################################
 
 Remove generated data under the repo (datasets, training runs, cache, logs) so
-you can re-run ``main.py`` or ``main.py --stage2`` from a clean slate. Pipelines
+you can re-run ``main.py``, ``main.py --stage2``, or ``main.py --stage3`` from a
+clean slate. Pipelines
 still support skip-if-done; delete only what you need.
 
 Presets:
@@ -20,6 +21,8 @@ Presets:
   **and** ``stage2_meshgraphnets/``), plus ``log/``.
 - ``stage2``- Mesh-focused subset: ``dataset-meshgraphnets``, mesh cache,
   ``cfd-stage2``, and all runs (same ``runs`` target as ``pipeline``).
+- ``stage3``- CFDBench subset: ``dataset-cfdbench``, CFDBench cache,
+  ``cfd-stage3``, and all runs.
 - ``models``- ``results/runs/`` only.
 - ``all``- ``pipeline`` plus Hydra dirs and ``.local_test_runs/``.
 
@@ -34,6 +37,9 @@ Quick reference::
 
     # Stage 2 only (still wipes all run folders)
     python scripts/clean_pipeline_artifacts.py --preset stage2 --yes
+
+    # Stage 3 only (CFDBench import + stage3 validation figures + all runs)
+    python scripts/clean_pipeline_artifacts.py --preset stage3 --yes
 
     # Common partial cleanups (--target repeatable; names from --list)
     python scripts/clean_pipeline_artifacts.py --target dataset-generated --yes
@@ -66,6 +72,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 PRESET_PIPELINE = "pipeline"
 PRESET_STAGE2 = "stage2"
+PRESET_STAGE3 = "stage3"
 PRESET_MODELS = "models"
 PRESET_ALL = "all"
 
@@ -84,6 +91,12 @@ PRESET_TARGETS: dict[str, tuple[str, ...]] = {
         "cfd-stage2",
         "runs",
     ),
+    PRESET_STAGE3: (
+        "dataset-cfdbench",
+        "cache-cfdbench",
+        "cfd-stage3",
+        "runs",
+    ),
     PRESET_ALL: (
         "dataset",
         "cache",
@@ -100,11 +113,14 @@ TARGET_HELP: dict[str, str] = {
     "dataset-zenodo": "dataset/zenodo_data only",
     "dataset-generated": "dataset/generated_data only",
     "dataset-meshgraphnets": "dataset/meshgraphnets_data only",
+    "dataset-cfdbench": "dataset/cfdbench_data only",
     "cache": ".cache/ (Zenodo/LBM upstream HDF5)",
     "cache-meshgraphnets": ".cache/meshgraphnets_cylinder only",
+    "cache-cfdbench": ".cache/cfdbench only",
     "runs": "results/runs/ (baselines, CNN, ConvLSTM, FNO checkpoints)",
     "cfd": "results/cfd_validation/ (Stage 1 + Stage 2 validation figures)",
     "cfd-stage2": "results/cfd_validation/stage2_meshgraphnets only",
+    "cfd-stage3": "results/cfd_validation/stage3_cfdbench only",
     "logs": "log/ (application log files)",
     "hydra": "outputs/, multirun/, .hydra/ (local Hydra outputs)",
     "test-runs": ".local_test_runs/ (pytest scratch)",
@@ -134,16 +150,22 @@ def artifact_paths(repo_root: Path, target: str) -> list[Path]:
         return [generated_dataset_root(root)]
     if target == "dataset-meshgraphnets":
         return [root / "dataset" / "meshgraphnets_data"]
+    if target == "dataset-cfdbench":
+        return [root / "dataset" / "cfdbench_data"]
     if target == "cache":
         return [root / ".cache"]
     if target == "cache-meshgraphnets":
         return [root / ".cache" / "meshgraphnets_cylinder"]
+    if target == "cache-cfdbench":
+        return [root / ".cache" / "cfdbench"]
     if target == "runs":
         return [root / "results" / "runs"]
     if target == "cfd":
         return [root / "results" / "cfd_validation"]
     if target == "cfd-stage2":
         return [root / "results" / "cfd_validation" / "stage2_meshgraphnets"]
+    if target == "cfd-stage3":
+        return [root / "results" / "cfd_validation" / "stage3_cfdbench"]
     if target == "logs":
         return [root / "log"]
     if target == "hydra":

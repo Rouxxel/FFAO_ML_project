@@ -222,3 +222,37 @@ Re-run Stage 1 from scratch: `python scripts/clean_pipeline_artifacts.py --prese
 then `python main.py --run`.
 
 Re-run Stage 2: `--preset stage2` (mesh dataset, mesh cache, stage2 CFD figures, all runs).
+
+---
+
+## Stage 3 (CFDBench multi-Re) — expected layout
+
+After `python scripts/run_stage3_pipeline.py --run` (or `python main.py --stage3 --run`):
+
+| Phase | Pass signal |
+|-------|-------------|
+| **import** | `dataset/cfdbench_data/manifest.json`, `metadata.csv`, Zarr stores per `simulations/*` |
+| **grid_validation** | `results/cfd_validation/stage3_cfdbench/SUMMARY.md`, `metrics.json`, `figures/` |
+| **train_cnn_re** | `results/runs/stage3_cnn_re/model.pt`, `preprocess_stats.json`, bundle JSON |
+| **eval_re** | `re_generalization_metrics.json`, `figures/re_generalization_heatmap.png` |
+
+```text
+dataset/cfdbench_data/
+├── manifest.json
+├── metadata.csv
+└── simulations/
+    └── cfdbench_cylinder_prop_*/
+results/cfd_validation/stage3_cfdbench/
+results/runs/stage3_cnn_re/
+    ├── model.pt, config.yaml, preprocess_stats.json
+    ├── re_generalization_metrics.json
+    └── figures/
+        ├── re_generalization_heatmap.png
+        └── error_vs_horizon_by_re.png
+.cache/cfdbench/   # HF snapshot (optional keep)
+```
+
+Re-run Stage 3: `--preset stage3` (CFDBench dataset, CFDBench cache, stage3 CFD figures, all runs).
+
+Local release gate: `python scripts/verify_stage3_local.py` — see
+[STAGE3_RELEASE.md](./STAGE3_RELEASE.md).

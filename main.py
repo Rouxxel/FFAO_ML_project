@@ -11,6 +11,8 @@
 Stage 1 (default): import → CFD validation → baselines → CNN train/eval.
 Stage 2: ``--stage2`` or ``dataset=stage2_meshgraphnets`` → mesh import → validate →
 MeshGraphNet train/eval.
+Stage 3: ``--stage3`` or ``dataset=stage3_cfdbench`` → CFDBench import → grid validate →
+Re-conditioned CNN train/eval.
 
 Required:
 pip install -e ".[core,dev,ml]"
@@ -53,9 +55,18 @@ Quick reference::
 
     # Same Stage 2 flow: scripts/run_stage2_pipeline.py --run
 
+    # Full pipeline - Stage 3 (CFDBench; ~13 GB interpolated subset)
+    python main.py --stage3 --dry-run
+    python main.py --stage3 --run --max-cases 20
+    python main.py --run dataset=stage3_cfdbench --max-cases 20
+    python main.py --stage3 --run --from train_cnn_re --epochs 50
+
+    # Same Stage 3 flow: scripts/run_stage3_pipeline.py --run
+
     # Clean slate (pipeline preset = Stage 1 + Stage 2 on disk)
     python scripts/clean_pipeline_artifacts.py --preset pipeline --yes
     python scripts/clean_pipeline_artifacts.py --preset stage2 --yes
+    python scripts/clean_pipeline_artifacts.py --preset stage3 --yes
 """
 
 # Native imports
@@ -78,6 +89,12 @@ from ffaoml.pipeline.stage2 import (
     Stage2PipelinePhase,
     hydra_overrides_select_stage2,
     run_stage2_pipeline,
+)
+from ffaoml.pipeline.stage3 import (
+    Stage3PipelineOptions,
+    Stage3PipelinePhase,
+    hydra_overrides_select_stage3,
+    run_stage3_pipeline,
 )
 
 """CONSTANTS-----------------------------------------------------------"""
@@ -160,6 +177,24 @@ Stage 2 (MeshGraphNets cylinder_flow; use --stage2 or dataset=stage2_meshgraphne
 Phases: import, mesh_validation, train_meshgn, eval_meshgn
 Import needs TensorFlow; training defaults to CPU (override train.device=cuda).
 
+Stage 3 (CFDBench multi-Re; use --stage3 or dataset=stage3_cfdbench)
+--------------------------------------------------------------------------------
+  python main.py --stage3 --dry-run
+  python main.py --stage3 --run --max-cases 20
+  python main.py --run dataset=stage3_cfdbench --max-cases 20
+  python main.py --stage3 --run --only import --max-cases 5
+  python main.py --stage3 --run --only grid_validation
+  python main.py --stage3 --run --only train_cnn_re --epochs 50
+  python main.py --stage3 --run --only eval_re
+  python main.py --stage3 --run --from train_cnn_re
+  python scripts/run_stage3_pipeline.py --run
+  python scripts/download_stage3_cfdbench.py --max-cases 20
+  python scripts/validate_stage3_cfdbench.py
+  python scripts/verify_stage3_local.py
+
+Phases: import, grid_validation, train_cnn_re, eval_re
+Disk: ~13 GB interpolated CFDBench subset (see documentation/DATA_SOURCES.md).
+
 Install first: pip install -e ".[core,dev,ml]"
 ================================================================================
 """
@@ -178,12 +213,19 @@ def build_parser() -> argparse.ArgumentParser:
         argparse.ArgumentParser: Configured parser.
     """
     parser = argparse.ArgumentParser(
-        description="FFAO ML pipeline (Stage 1 default; use --stage2 for mesh).",
+        description=(
+            "FFAO ML pipeline (Stage 1 default; --stage2 mesh; --stage3 CFDBench)."
+        ),
     )
     parser.add_argument(
         "--stage2",
         action="store_true",
         help="Run Stage 2 MeshGraphNets pipeline instead of Stage 1.",
+    )
+    parser.add_argument(
+        "--stage3",
+        action="store_true",
+        help="Run Stage 3 CFDBench / multi-Re CNN pipeline instead of Stage 1.",
     )
     parser.add_argument(
         "--run",
@@ -298,6 +340,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Stage 2: skip mesh qualitative validation figures.",
     )
     parser.add_argument(
+        "--max-cases",
+        type=int,
+        default=None,
+        help="Stage 3: cap CFDBench cases imported this run.",
+    )
+    parser.add_argument(
+        "--cfdbench-local-root",
+        type=Path,
+        default=None,
+        help="Stage 3: skip HF download; use existing CFDBench data tree.",
+    )
+    parser.add_argument(
+        "--stage3-run-id",
+        default="stage3_cnn_re",
+        help="Stage 3 folder under results/runs/.",
+    )
+    parser.add_argument(
         "--only",
         help="Run a single pipeline phase (see usage guide).",
     )
@@ -351,9 +410,46 @@ def _run_stage2_from_args(
     return 0
 
 
+def _run_stage3_from_args(
+    parser: argparse.ArgumentParser, args: argparse.Namespace
+) -> int:
+    if args.only and args.start_from:
+        parser.error("Use either --only or --from, not both.")
+    phase_values = {p.value for p in Stage3PipelinePhase}
+    if args.only and args.only not in phase_values:
+        parser.error(
+            f"Unknown Stage 3 phase {args.only!r}; choose from {sorted(phase_values)}"
+        )
+    if args.start_from and args.start_from not in phase_values:
+        choices = ", ".join(sorted(phase_values))
+        parser.error(f"Unknown Stage 3 phase {args.start_from!r}; choose: {choices}")
+    skip_grid = args.skip_cfd_validation
+    opts = Stage3PipelineOptions(
+        repo_root=REPO_ROOT,
+        cnn_run_id=args.stage3_run_id,
+        train_epochs=args.epochs,
+        max_cases=args.max_cases,
+        local_data_root=args.cfdbench_local_root,
+        force_download=args.force_download,
+        skip_grid_validation=skip_grid,
+        hydra_overrides=list(args.hydra_overrides),
+        force=args.force,
+        dry_run=args.dry_run,
+    )
+    only = Stage3PipelinePhase(args.only) if args.only else None
+    start_from = Stage3PipelinePhase(args.start_from) if args.start_from else None
+    try:
+        results = run_stage3_pipeline(opts, only=only, start_from=start_from)
+    except PrerequisiteError as exc:
+        log_handler.error("%s", exc)
+        return 1
+    print_summary(results)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """
-    CLI entry for Stage 1 (default) or Stage 2 pipelines.
+    CLI entry for Stage 1 (default), Stage 2, or Stage 3 pipelines.
 
     Parameters:
         argv (list[str] | None): Argument vector (defaults to ``sys.argv[1:]``).
@@ -370,6 +466,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.stage2 or hydra_overrides_select_stage2(list(args.hydra_overrides)):
         return _run_stage2_from_args(parser, args)
+
+    if args.stage3 or hydra_overrides_select_stage3(list(args.hydra_overrides)):
+        return _run_stage3_from_args(parser, args)
 
     if args.only and args.start_from:
         parser.error("Use either --only or --from, not both.")

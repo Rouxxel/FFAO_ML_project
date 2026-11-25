@@ -11,10 +11,17 @@
 Train ``FlowCNN`` on temporal train/val splits and write a checkpoint bundle under
 ``results/runs/<run_id>/``.
 
-Example::
+Stage 1 example::
 
     python scripts/download_stage1_zenodo.py --local-file path/to/data.h5
     python scripts/train.py --run-id cnn_stage1 --epochs 50
+
+Stage 3 (Re-conditioned CNN) — stub or imported CFDBench::
+
+    python scripts/train.py --run-id stage3_cnn_re \\
+        dataset=splits model=cnn_re --epochs 50
+    python scripts/train.py --run-id stage3_cnn_re \\
+        dataset=stage3_cfdbench model=cnn_re --epochs 50
 """
 
 # Native imports
@@ -42,7 +49,9 @@ def main() -> None:
     Returns:
         None
     """
-    parser = argparse.ArgumentParser(description="Train Stage 1 one-step FlowCNN.")
+    parser = argparse.ArgumentParser(
+        description="Train one-step FlowCNN; default Stage 1 config unless overrides passed.",
+    )
     parser.add_argument("--run-id", default="cnn_train", help="Run folder name.")
     parser.add_argument(
         "--epochs", type=int, default=None, help="Override train.epochs."
@@ -58,9 +67,16 @@ def main() -> None:
         default=None,
         help="Override results/runs/<run_id>.",
     )
+    parser.add_argument(
+        "hydra_overrides",
+        nargs="*",
+        default=[],
+        metavar="OVERRIDE",
+        help="Hydra overrides, e.g. dataset=stage3_cfdbench model=cnn_re",
+    )
     args = parser.parse_args()
 
-    overrides: list[str] = []
+    overrides: list[str] = list(args.hydra_overrides)
     if args.epochs is not None:
         overrides.append(f"train.epochs={args.epochs}")
     if args.model is not None:
