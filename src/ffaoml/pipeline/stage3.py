@@ -49,9 +49,7 @@ STAGE3_CFD_VALIDATION_DIR = grid_validation.DEFAULT_OUTPUT
 
 def hydra_overrides_select_stage3(extra_overrides: list[str]) -> bool:
     """True when Hydra CLI overrides request the Stage 3 dataset group."""
-    return any(
-        item.startswith("dataset=stage3_cfdbench") for item in extra_overrides
-    )
+    return any(item.startswith("dataset=stage3_cfdbench") for item in extra_overrides)
 
 
 STAGE3_HYDRA_DEFAULTS: tuple[str, ...] = (
@@ -213,9 +211,7 @@ def _check_prerequisites(
         if phase == Stage3PipelinePhase.EVAL_RE and not _run_artifact(
             runs / opts.cnn_run_id, "model.pt"
         ):
-            if not _phase_runs_before(
-                phases, Stage3PipelinePhase.TRAIN_CNN_RE, phase
-            ):
+            if not _phase_runs_before(phases, Stage3PipelinePhase.TRAIN_CNN_RE, phase):
                 missing.append(f"CNN run {opts.cnn_run_id}/model.pt")
     if missing:
         lines = "\n".join(f"  - {item}" for item in missing)
